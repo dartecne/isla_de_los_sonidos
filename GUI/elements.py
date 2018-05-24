@@ -46,3 +46,12 @@ class LoroLoco( Element ):
             logging.debug( "LORO STOP!!!" )
          self.data_old = self.data
 
+class Secuenciador( Element ):
+    SEQ_1 = "C-4"
+    SEQ_2 = "C-4"
+    SEQ_3 = "C-4"
+    SEQ_4 = "C-4"
+    SEQ_5 = "C-4"
+    SEQ_6 = "C-4"
+
+    def run(self):
