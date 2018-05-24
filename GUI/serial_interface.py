@@ -21,6 +21,9 @@ class serial_interface(object):
     SELVA_SEL = [35, 36, 37, 38]
     JOY_X = 39
     JOY_Y = 40
+    BPM = 41
+    TEMPO = 42
+    DATA = 43
 
     def open_port(self) :
         self.serial_port = serial.Serial()

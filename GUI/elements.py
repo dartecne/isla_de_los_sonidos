@@ -55,3 +55,8 @@ class Secuenciador( Element ):
     SEQ_6 = "C-4"
 
     def run(self):
+        while(True) :
+         if( (self.data[serial_interface.LORO_REC] == "1") &
+           (self.data_old[serial_interface.LORO_REC] == "0") ) :
+            self.MIDI.note_on( self.LORO_REC, 127 )
+            logging.debug( "LORO REC!!!" )

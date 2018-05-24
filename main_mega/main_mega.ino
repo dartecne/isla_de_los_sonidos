@@ -250,6 +250,9 @@ void loop() {
 	bpm = constrain( bpm, 0, 500 );
 	unsigned long tempo = 1000000UL * 60UL / bpm;
 
+	send_string( bpm );
+	send_string( tempo );
+
 	if ( micros() - micros_start > tempo ) {
 		turn_leds_off();
 		led_index++;
