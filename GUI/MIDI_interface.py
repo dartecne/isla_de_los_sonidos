@@ -8,12 +8,15 @@ class MIDI_interface(object):
     def connect(self):
         print( "IN:" + str(mido.get_input_names()) )
         print( "OUT:" + str(mido.get_output_names()) )
-
-        self.outport = mido.open_output(mido.get_output_names()[1])
+        midi_outputs = mido.get_output_names()
+        self.outport = None
+        if len(midi_outputs) > 0:
+            self.outport = mido.open_output(midi_outputs[1])
 #
 #        self.outport = mido.open_output("isla 2")
 #        self.outport = mido.open_output()
-
+        return self.outport
+    
     def get_input_names(self):
         return( mido.get_input_names() )
 

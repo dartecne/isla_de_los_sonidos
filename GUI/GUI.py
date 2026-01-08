@@ -15,12 +15,14 @@ import controler
 ###########################################################################
 ## Class MyFrame
 ###########################################################################
+#wxSizerFlags::DisableConsistencyChecks()
 
 class MyFrame ( wx.Frame ):
 	
 	def __init__( self, parent ):
+#		wx.disableConsistencyChecks()
 		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"SONORON: Isla de los Sonidos", pos = wx.DefaultPosition, size = wx.Size( 805,567 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
-		
+				
 		self.SetSizeHintsSz( wx.DefaultSize, wx.DefaultSize )
 		
 		panelSizer = wx.BoxSizer( wx.VERTICAL )
@@ -70,7 +72,7 @@ class MyFrame ( wx.Frame ):
 		bSizer172.Add( self.m_checkBox_arpegiator, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
 		
 		self.m_checkBox_seres_rec = wx.CheckBox( self.panel, wx.ID_ANY, u"REC", wx.DefaultPosition, wx.DefaultSize, 0 )
-		bSizer172.Add( self.m_checkBox_seres_rec, 1, wx.ALIGN_CENTER|wx.ALIGN_RIGHT|wx.ALL, 0 )
+		bSizer172.Add( self.m_checkBox_seres_rec, 1, wx.ALIGN_CENTER|wx.ALL, 0 )
 		
 		
 		bSizer16.Add( bSizer172, 0, wx.ALL|wx.EXPAND, 5 )
@@ -86,7 +88,7 @@ class MyFrame ( wx.Frame ):
 		
 		self.m_staticText52 = wx.StaticText( self.panel, wx.ID_ANY, u"Slide Ribbon", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText52.Wrap( -1 )
-		seresSizer.Add( self.m_staticText52, 0, wx.ALIGN_CENTER|wx.ALIGN_RIGHT|wx.ALL, 5 )
+		seresSizer.Add( self.m_staticText52, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
 		
 		self.m_textCtrl_slide_2 = wx.TextCtrl( self.panel, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
 		seresSizer.Add( self.m_textCtrl_slide_2, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
@@ -249,7 +251,7 @@ class MyFrame ( wx.Frame ):
 		cuadroSizer.Add( cuevaSizer, 1, wx.EXPAND, 5 )
 		
 		
-		elementosSizer.Add( cuadroSizer, 3, wx.EXPAND|wx.ALIGN_CENTER_HORIZONTAL, 5 )
+		elementosSizer.Add( cuadroSizer, 3, wx.EXPAND, 5 )
 		
 		self.m_staticline6 = wx.StaticLine( self.panel, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		elementosSizer.Add( self.m_staticline6, 0, wx.EXPAND |wx.ALL, 5 )
@@ -361,7 +363,7 @@ class MyFrame ( wx.Frame ):
 		self.m_staticText46.Wrap( -1 )
 		self.m_staticText46.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), 70, 90, 92, False, wx.EmptyString ) )
 		
-		headerSizer.Add( self.m_staticText46, 1, wx.ALIGN_RIGHT|wx.ALL, 5 )
+		headerSizer.Add( self.m_staticText46, 1, wx.ALL, 5 )
 		
 		
 		logSizer.Add( headerSizer, 0, wx.EXPAND, 0 )

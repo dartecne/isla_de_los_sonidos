@@ -1,10 +1,10 @@
 
 import serial
 import time
-
+from serial.tools import list_ports
 
 class serial_interface(object):
-    """Clas that reads data from Serial"""
+    """Class that reads data from Serial"""
 
     # data IDs
     PUENTE = [0,1,2,3,4,5]
@@ -29,16 +29,19 @@ class serial_interface(object):
         self.serial_port = serial.Serial()
 #        self.serial_port.baudrate = 9600
         self.serial_port.baudrate = 115200
-#        self.serial_port.port = 'COM5'
-#        print(str(serial.tools.list_ports()))
-        self.serial_port.port = 'COM10'
-        self.serial_port.open()
-        self.serial_port.flushInput()
-
+        serial_ports = serial.tools.list_ports.comports()
+        if len(serial_ports) > 0:
+#                self.serial_port.port = 'COM4'
+                self.serial_port.port = serial_ports[0].device
+                self.serial_port.open()
+                self.serial_port.flushInput()
+                return True
+        return False
+    
     def read_serial_data(self) :
 #        self.serial_port.flush()
         data = self.serial_port.readline().split()
-        self.serial_port.write(b'<');
+        self.serial_port.write(b'<')
         return str(data)
 
 
