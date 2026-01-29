@@ -1,10 +1,10 @@
 
 import serial
 import time
-
+from serial.tools import list_ports
 
 class serial_interface(object):
-    """Clas that reads data from Serial"""
+    """Class that reads data from Serial"""
 
     # data IDs
     PUENTE = [0,1,2,3,4,5]

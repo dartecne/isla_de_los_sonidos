@@ -18,7 +18,8 @@ class MIDI_interface(object):
 #
 #        self.outport = mido.open_output("isla 2")
 #        self.outport = mido.open_output()
-
+        return self.outport
+    
     def get_input_names(self):
         return( mido.get_input_names() )
 
