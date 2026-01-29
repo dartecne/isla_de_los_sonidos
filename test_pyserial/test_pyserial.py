@@ -13,7 +13,7 @@ class serial_interface(object):
 #        self.serial_port.baudrate = 9600
         self.serial_port.baudrate = 115200
 #        self.serial_port.port = 'COM10'
-        self.serial_port.port = 'COM5'
+        self.serial_port.port = 'COM3'
         self.serial_port.timeout = None
         self.serial_port.rts = True
         self.serial_port.dtr = True

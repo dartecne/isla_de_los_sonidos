@@ -53,7 +53,7 @@ class Mother(threading.Thread ):
         while(1):
             logging.debug(str(self.q.get()))
             self.MIDI.note_on("C-6")
-            time.sleep(1)
+            time.sleep(0.100)
 
 class Son(Father):
     def run(self):
@@ -61,11 +61,16 @@ class Son(Father):
             logging.debug(str(self.data))
             time.sleep(1)
 
+
+
 if __name__ == '__main__':
     father = Father(69, "father_69")
     mother = Mother(1, "mother_1")
+    consumer = Mother(2, "consumer")
     mother.set_queue(father.get_queue())
     mother.set_MIDI(father.get_MIDI())
+    consumer.set_queue(father.get_queue())
+    consumer.set_MIDI(father.get_MIDI())
     father.start()
     mother.start()
-
+    consumer.start()

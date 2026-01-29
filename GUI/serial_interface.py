@@ -12,7 +12,7 @@ class serial_interface(object):
     LORO_REC = 7
     TIMON = 8
     ARPEGIATOR = 9
-    SERES_SELVA = [10, 11, 12, 13, 14, 15]
+    SERES_ISLA = [10, 11, 12, 13, 14, 15]
     SLIDE_RIBBON = [16, 17]
     CUEVA_SEL = [18, 19, 20]
     SW = [21, 22, 23, 24, 25, 26]
@@ -23,22 +23,29 @@ class serial_interface(object):
     JOY_Y = 40
     BPM = 41
     TEMPO = 42
-    DATA = 43
+    INDEX = 43
+    DATA = 44
+    N = 45
 
     def open_port(self) :
         self.serial_port = serial.Serial()
 #        self.serial_port.baudrate = 9600
         self.serial_port.baudrate = 115200
+#        print(str(serial.tools.list_ports())) No funciona
+#        n = len(serial.tools.list_ports())
+#        print("n serial ports = " + str(n))
+#        self.serial_port.port = 'COM10'
 #        self.serial_port.port = 'COM5'
-#        print(str(serial.tools.list_ports()))
-        self.serial_port.port = 'COM10'
+        self.serial_port.port = 'COM3'
         self.serial_port.open()
         self.serial_port.flushInput()
 
     def read_serial_data(self) :
 #        self.serial_port.flush()
-        data = self.serial_port.readline().split()
+#        data = self.serial_port.readline().split().decode()
+        data = self.serial_port.readline().decode()
         self.serial_port.write(b'<');
-        return str(data)
+#        return str(data)
+        return data
 
 

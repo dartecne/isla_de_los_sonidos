@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>ad4a5603-e2cd-4675-9135-7a32720eb3e6</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>testThreads.py</StartupFile>
+    <StartupFile>threads_and_queues.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -23,6 +23,9 @@
   <ItemGroup>
     <Compile Include="MIDI_interface.py" />
     <Compile Include="testThreads.py" />
+    <Compile Include="threads_and_queues.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

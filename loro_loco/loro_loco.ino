@@ -9,13 +9,11 @@
 LoroLocoClass loro_loco;
 void setup() {
 	loro_loco.init();
-	pinMode(13, OUTPUT);
 
 }
 
 // the loop function runs over and over again until power down or reset
 void loop() {
-	digitalWrite(13, 127);
 	loro_loco.check_button();
 	loro_loco.tick();
 	delay(30);

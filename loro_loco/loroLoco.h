@@ -3,6 +3,8 @@
 #ifndef _LOROLOCO_h
 #define _LOROLOCO_h
 
+#define PROTO
+
 #if defined(ARDUINO) && ARDUINO >= 100
 	#include "arduino.h"
 #else
@@ -30,16 +32,22 @@ class LoroLocoClass
 	 unsigned long present;
 	 unsigned long timer = PLAY_TIMER; // ms of PLAY state
 
-	 int led_r_pin = 4;// 12;
-	int led_g_pin = 2;// 13;
-	int one_shot_led = 3;
-	int one_shot = 5;
+#ifdef PROTO
+	 int led_r_pin = 12;
+	 int led_g_pin = 13;
+	 int one_shot = 26;
+#else
+	 int led_r_pin = 4;
+	 int led_g_pin = 2;
+	 int one_shot = 26;
+#endif
+	 int one_shot_led = 3;
+
 	int one_shot_value = LOW;
 
 	int check_button(); // checks if button is on and change state
 	void reset_timer();
 	bool check_timer(unsigned long timer);
-	bool check_timer();
 	int tick(); // change leds ilumination
 	void init();
 	void test_leds();

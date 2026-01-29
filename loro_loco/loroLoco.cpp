@@ -53,8 +53,12 @@ int LoroLocoClass::tick()
 		analogWrite(led_g_pin, oscurity);
 		analogWrite(led_r_pin, oscurity);
 	}
+	else {
+		state = IDLE;
+	}
 
 	oscurity = oscurity + fade_amount;
+//	oscurity = 0;
 	if (oscurity <= 0 || oscurity >= 255) {
 		fade_amount = -fade_amount;
 		oscurity = constrain( oscurity, 0, 255 );
@@ -70,15 +74,18 @@ void LoroLocoClass::init()
 	pinMode( one_shot_led, OUTPUT );
 	pinMode( led_r_pin, OUTPUT );
 	pinMode( led_g_pin, OUTPUT );
+	state = IDLE;
 	test_leds();
 	origin = millis();
 
 }
 void LoroLocoClass::test_leds() {
+	// eyes in green
 	analogWrite( led_r_pin, 0);
 	analogWrite( led_g_pin, 255);
 	analogWrite( one_shot_led, 255 );
 	delay(1000);
+	// eyes in red
 	analogWrite( led_r_pin, 255 );
 	analogWrite( led_g_pin, 0 );
 	analogWrite( one_shot_led, 0 );

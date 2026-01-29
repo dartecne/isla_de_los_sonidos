@@ -16,71 +16,14 @@
 
 
 */
-#include "loroLoco.h"
+#define TIMON_ON
+#define TUNEL_ON
+//#define PROTO
 
 #include "Header.h"
+#include "loroLoco.h"
+#include "definitions.h"
 
-//#define TIMON_ON
-//#define TUNEL_ON
-
-#define NUM_LEDS 6
-#define NUM_CUEVA_SEL	3
-#define NUM_SELVA_ONE_SHOT	6
-#define NUM_SELVA_SEL	4
-#define NUM_SW	6
-#define NUM_SERES_SEL	6
-#define NUM_PUENTE_PIEZOS	6
-
-#define PS2CLOCK  24
-#define PS2DATA   22
-
-//#define BAUDRATE	57600
-//#define BAUDRATE	9600
-#define BAUDRATE	115200
-
-// PUENTE
-int puente_piezo_pin[] = { A10, A11, A12, A13, A14, A15 }; // analog inputs
-int puente_piezo_value[] = { 0, 0, 0, 0, 0, 0 }; // analog inputs
-
-												 // TUNEL
-int sonar_pin = 8;	// digital i/o
-long sonar_value = 0;
-
-// LOROLOCO
-LoroLocoClass loro_loco;
-
-//TIMON
-long timon_data_value = 0;
-
-// CUEVA DE LOS RUIDOS
-int cueva_sel_pin[] = { 32, 30, 28 };
-int cueva_sel_value[] = { 0, 0, 0 };
-int sw_pin[] = { 23, 25, 27, 29, 31, 33 };
-int sw_value[] = { 0, 0, 0, 0, 0, 0 };
-int pot_pin[] = { A0, A1 };
-int pot_value[] = { 0, 0 };
-int led_pin[] = { 4, 5, 6, 9, 10, 11 };
-int led_value[] = { 0, 0, 0, 0, 0 };
-
-// SELVA SONIDOS AMBIENTE
-int selva_one_shot_pin[] = { 44, 42, 40, 38, 36, 34 };
-int selva_one_shot_value[] = { 0, 0, 0, 0, 0, 0 };
-int selva_sel_pin[] = { 52, 50, 48, 46 };
-int selva_sel_value[] = { 0, 0, 0, 0 };
-int joy_pin[] = { A8, A9 };
-int joy_value[] = { 0, 0 };
-int ball_led_pin = 7;
-int ball_led_value = 0;
-
-// SERES DE LA ISLA
-int arp_led_pin = 39;
-int arp_led_value = 0;
-int arp_pin = 41;
-int arp_value = 0;
-int seres_sel_pin[] = { 53, 51, 49, 47, 45, 43 };
-int seres_sel_value[] = { 0, 0, 0, 0, 0, 0 };
-int slide_ribbon_pin[] = { A2, A3 };
-int slide_ribbon_value[] = { 0, 0 };
 
 int brightness[5];    // how bright the LED is
 int fadeAmount = 5;    // how many points to fade the LED by
@@ -167,7 +110,7 @@ void loop() {
 
 	// TUNEL
 #ifdef TUNEL_ON
-	sonar_value = readDistance(sonar_pin);
+	sonar_value = readDistance( sonar_in_pin, sonar_out_pin );
 #else
 	sonar_value = 0;
 #endif
@@ -176,7 +119,7 @@ void loop() {
 
 	// LORO
 	int loro_one_shot_value = loro_loco.check_button();
-	loro_loco.tick();
+	loro_loco.tick(); // noise in audio
 	send_string(loro_one_shot_value);
 
 	// TIMON
@@ -219,6 +162,7 @@ void loop() {
 	}
 	for (int i = 0; i < 2; i++) {
 		pot_value[i] = analogRead(pot_pin[i]);
+		pot_value[i] = map(pot_value[i], 0, 1023, 127, 0); // map for MIDI
 		send_string(pot_value[i]);
 	}
 
@@ -232,8 +176,12 @@ void loop() {
 		send_string(selva_sel_value[i]);
 	}
 	joy_value[0] = analogRead(joy_pin[0]);
+  // map comment because accelerometer real range is very lower than 0, 1023
+//	joy_value[0] = map(joy_value[0], 0, 1023, 0, 127); // map for MIDI
 	send_string(joy_value[0]);
+
 	joy_value[1] = analogRead(joy_pin[1]);
+//	joy_value[1] = map(joy_value[1], 0, 1023, 0, 127); // map for MIDI
 	send_string(joy_value[1]);
 
 //	analogWrite(ball_led_pin, brightness[0]);
@@ -246,8 +194,8 @@ void loop() {
 
 //	double tempo_float = 1000UL * 60UL / bpm;
 //	unsigned long tempo = (unsigned long) tempo_float;
-	bpm += timon_data_value;
-	bpm = constrain( bpm, 0, 500 );
+	bpm += 2*timon_data_value;
+	bpm = constrain( bpm, 20, 999 );
 	unsigned long tempo = 1000000UL * 60UL / bpm;
 
 	send_string( bpm );
@@ -258,8 +206,12 @@ void loop() {
 		led_index++;
 		if (led_index >= NUM_LEDS) led_index = 0;
 		if (sw_value[led_index] == HIGH) analogWrite( led_pin[led_index], 255 );
+		send_string( led_index ); // PING to synchro arduino Sequencer with Python implementation
 
 		micros_start = micros();
+	}
+	else {
+		send_string(-1);  // index -1 when time hasn't arrive to tempo, yet.
 	}
 	send_string(Serial.availableForWrite());//	if (< 41) delay(1000);
 
@@ -273,12 +225,6 @@ void loop() {
 
 	} while (b != '<'); // signal that python app already read serial buffer. No data losed
 	
-	//while (Serial.availableForWrite() < 8);
-//	Serial.print(tempo);
-//	Serial.print(",");
-//	Serial.println(bpm);
-
-//	delay(40);
 }
 
 int get_selection( int sel_value[], int N ) {
@@ -293,15 +239,15 @@ void turn_leds_off() {
 	}
 }
 
-long readDistance(int pin) {
-	pinMode(pin, OUTPUT);
-	digitalWrite(pin, LOW);
+long readDistance( int pin_in, int pin_out ) {
+	pinMode(pin_out, OUTPUT);
+	digitalWrite(pin_out, LOW);
 	delayMicroseconds(2);
-	digitalWrite(pin, HIGH);
+	digitalWrite(pin_out, HIGH);
 	delayMicroseconds(5);
-	digitalWrite(pin, LOW);
-	pinMode(pin, INPUT);
-	long duration = pulseIn(pin, HIGH);
+	digitalWrite(pin_out, LOW);
+	pinMode(pin_in, INPUT);
+	long duration = pulseIn(pin_in, HIGH, 10000);
 	return duration / 29 / 2;
 }
 

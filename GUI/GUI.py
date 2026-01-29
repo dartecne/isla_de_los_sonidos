@@ -12,7 +12,7 @@ import wx.xrc
 
 import controler
 
-###########################################################################
+###############################################111############################
 ## Class MyFrame
 ###########################################################################
 
@@ -416,7 +416,9 @@ class MyFrame ( wx.Frame ):
 		self.m_button_puerto_midi.Bind( wx.EVT_BUTTON, self.OnMIDIConnect )
 	
 		self.controler = controler.Controler(1, "control_thread", self)
-	
+		self.m_textCtrl_inputs.AppendText( 'Conectando.../n' )
+		self.controler.start()
+
 	def __del__( self ):
 		pass
 	

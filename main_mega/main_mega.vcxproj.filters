@@ -27,6 +27,9 @@
     <ClInclude Include="..\loro_loco\loroLoco.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="definitions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\loro_loco\loroLoco.cpp">
