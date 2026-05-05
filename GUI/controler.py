@@ -38,7 +38,7 @@ class Controler(threading.Thread, serial_interface):
 
     def run(self):
 
-        self.loroloco.start()
+#        self.loroloco.start()
         self.sequencer.start()
 #        self.states_diagram.start()
 
@@ -86,7 +86,7 @@ class Controler(threading.Thread, serial_interface):
 #        self.gui.m_textCtrl_tunel_sonar.SetValue(self.data[serial_interface.BPM])
 
 # LORO
-        self.gui.m_checkBox_loro_rec.SetValue(bool(int(self.data[serial_interface.LORO_REC])))
+#        self.gui.m_checkBox_loro_rec.SetValue(bool(int(self.data[serial_interface.LORO_REC])))
 
 # TIMON
         #self.gui.m_textCtrl_timon.SetValue(self.data[serial_interface.BPM])

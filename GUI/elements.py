@@ -30,7 +30,7 @@ class StatesDiagram( Element ):
     FADE_IN_CC = 26
     EXPLOTION_NOTE = 31
     STOP_NOTE = 38
-    init = time.clock()
+    init = time.perf_counter()
 #    def __init__(self, threadID, name, q, MIDI):
 #        Element.__init__(self, threadID, name, q, MIDI)
 
@@ -38,13 +38,13 @@ class StatesDiagram( Element ):
 #        LAPSO = 10 * 60 # lapso for changing the state of the island
         LAPSO = 10  # lapso for changing the state of the island
         while(True):
-            if(( time.clock() - self.init ) > LAPSO):
+            if(( time.perf_counter() - self.init ) > LAPSO):
                 logging.debug( "EXPLOTION!!!!" )
                 self.fade_all_out()
                 self.MIDI.note_on( self.EXPLOTION_NOTE, 127, channel = 1 )
 #                time.sleep(2*60)
                 self.fade_all_in()
-                self.init = time.clock()
+                self.init = time.perf_counter()
 
     def fade_all_out(self):
         self.MIDI.note_on( self.STOP_NOTE, 127, channel = 1 )
@@ -164,38 +164,39 @@ class Secuenciador( Element ):
 
         self.d_old = self.d
 
-    def handle_puente(self):
-#        logging.debug("  data = "
-#              + str( self.data[serial_interface.PUENTE[0]] + ", ")
-#              + str( self.data[serial_interface.PUENTE[1]] + ", ")
-#              + str( self.data[serial_interface.PUENTE[2]] + ", ")
-#              + str( self.data[serial_interface.PUENTE[3]] + ", ")
-#              + str( self.data[serial_interface.PUENTE[4]] + ", ")
-#              + str(self.data[serial_interface.PUENTE[5]]))
-
-        for i in range(6):
-            d = int(self.data[serial_interface.PUENTE[i]]) - int(self.data_old[serial_interface.PUENTE[i]])
-        #                d = abs(d)
-
-#            if( False ):
-#            if (d > self.PUENTE_ON_THRES[i]):
-            #                    d = self.normalize(d, old_min = 0, old_max = 1023)
-            if((int(self.data[serial_interface.PUENTE[i]]) > self.PUENTE_ON_THRES[i]) &
-                    (int(self.data_old[serial_interface.PUENTE[i]]) < self.PUENTE_ON_THRES[i])) :
-                self.MIDI.note_on( self.PUENTE_NOTES[i], 127, channel = 2 )
-#                print(str(i) + "  NOTE_ON " + str(self.PUENTE_NOTES[i]) +
-#                  "   data = " + self.data[serial_interface.PUENTE[i]] +
-#                  "   data_old = " + self.data_old[serial_interface.PUENTE[i]] + "  d = " + str(d))
-#            if( False ):
-#            if (d < -self.PUENTE_OFF_THRES[i]):
-            if ((int(self.data[serial_interface.PUENTE[i]]) < self.PUENTE_ON_THRES[i]) &
-                    (int(self.data_old[serial_interface.PUENTE[i]]) > self.PUENTE_ON_THRES[i])):
-                #                    d = self.normalize(d, old_min = 0, old_max = 1023)
-                self.MIDI.note_off( self.PUENTE_NOTES[i], 127, channel = 2 )
-#                print(str(i) + "  NOTE_OFF " + str(self.PUENTE_NOTES[i]) +
-#                "   data = " + self.data[serial_interface.PUENTE[i]] +
-#                "   data_old = " + self.data_old[serial_interface.PUENTE[i]] + "  d = " + str(d))
-
+# Se maneja desde otro lado
+#    def handle_puente(self):
+##        logging.debug("  data = "
+##              + str( self.data[serial_interface.PUENTE[0]] + ", ")
+##              + str( self.data[serial_interface.PUENTE[1]] + ", ")
+##              + str( self.data[serial_interface.PUENTE[2]] + ", ")
+##              + str( self.data[serial_interface.PUENTE[3]] + ", ")
+##              + str( self.data[serial_interface.PUENTE[4]] + ", ")
+##              + str(self.data[serial_interface.PUENTE[5]]))
+#
+#        for i in range(6):
+#            d = int(self.data[serial_interface.PUENTE[i]]) - int(self.data_old[serial_interface.PUENTE[i]])
+#        #                d = abs(d)
+#
+##            if( False ):
+##            if (d > self.PUENTE_ON_THRES[i]):
+#            #                    d = self.normalize(d, old_min = 0, old_max = 1023)
+#            if((int(self.data[serial_interface.PUENTE[i]]) > self.PUENTE_ON_THRES[i]) &
+#                    (int(self.data_old[serial_interface.PUENTE[i]]) < self.PUENTE_ON_THRES[i])) :
+#                self.MIDI.note_on( self.PUENTE_NOTES[i], 127, channel = 2 )
+##                print(str(i) + "  NOTE_ON " + str(self.PUENTE_NOTES[i]) +
+##                  "   data = " + self.data[serial_interface.PUENTE[i]] +
+##                  "   data_old = " + self.data_old[serial_interface.PUENTE[i]] + "  d = " + str(d))
+##            if( False ):
+##            if (d < -self.PUENTE_OFF_THRES[i]):
+#            if ((int(self.data[serial_interface.PUENTE[i]]) < self.PUENTE_ON_THRES[i]) &
+#                    (int(self.data_old[serial_interface.PUENTE[i]]) > self.PUENTE_ON_THRES[i])):
+#                #                    d = self.normalize(d, old_min = 0, old_max = 1023)
+#                self.MIDI.note_off( self.PUENTE_NOTES[i], 127, channel = 2 )
+##                print(str(i) + "  NOTE_OFF " + str(self.PUENTE_NOTES[i]) +
+##                "   data = " + self.data[serial_interface.PUENTE[i]] +
+##                "   data_old = " + self.data_old[serial_interface.PUENTE[i]] + "  d = " + str(d))
+#
     def handle_timon(self):
         if (int(self.data[serial_interface.BPM]) != int(self.data_old[serial_interface.BPM])):
             x = self.normalize(int(self.data[serial_interface.BPM]),
@@ -353,7 +354,7 @@ class Secuenciador( Element ):
             if(i == 0 ) :
                 self.data_old = self.data
                 i+=1
-            self.handle_puente()
+#            self.handle_puente()
             self.handle_tunel()
             self.handle_timon()
             self.handle_ambientes()
