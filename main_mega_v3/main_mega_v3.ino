@@ -17,9 +17,9 @@
  implement timeouts in PS2 readings
 
 */
-#define TIMON_ON
-#define TUNEL_ON
-#define PROTO
+//#define TIMON_ON
+//#define TUNEL_ON
+//#define PROTO
 
 #include "Header.h" //with sonoron.sln this path is enough as VisualStudio gets the file
 #include "definitions.h"
@@ -73,8 +73,6 @@ void setup() {
 	//
 
 	// SELVA AMBIENTE
-	pinMode(ball_led_pin, OUTPUT);
-
 	for (int i = 0; i < NUM_SELVA_SEL; i++) {
 		pinMode(selva_sel_pin[i], INPUT);
 	}
@@ -95,17 +93,12 @@ void loop() {
 
 	// TUNEL
 #ifdef TUNEL_ON
-	sonar_value = readDistance(sonar_pin);
+	sonar_value = readDistance(tunel_trigger, tunel_echo);
 #else
 	sonar_value = 0;
 #endif
 
 	send_string(sonar_value);
-
-	// LORO
-	int loro_one_shot_value = loro_loco.check_button();
-	loro_loco.tick();
-	send_string(loro_one_shot_value);
 
 	// TIMON
 	char stat, x = 0, y;
@@ -127,15 +120,16 @@ void loop() {
 	if (arp_value == HIGH) digitalWrite( arp_led_pin, HIGH );
 	else digitalWrite( arp_led_pin, LOW );
 
+  mic_value= digitalRead( mic_pin);
+  send_string(mic_value);
+
 	for (int i = 0; i < NUM_SERES_SEL; i++) {
 		seres_sel_value[i] = digitalRead( seres_sel_pin[i] );
 		send_string(seres_sel_value[i]);
 	}
-	for (int i = 0; i < 2; i++) {
-		slide_ribbon_value[i] = analogRead( slide_ribbon_pin[i] );
-		send_string( slide_ribbon_value[i] );
-	}
-
+	slide_ribbon_value = analogRead( slide_ribbon_pin );
+	send_string( slide_ribbon_value );
+  send_string( analogRead(A0)); // mandamos ruido
 	//CUEVA RUIDOS
 	for (int i = 0; i < NUM_CUEVA_SEL; i++) {
 		cueva_sel_value[i] = digitalRead( cueva_sel_pin[i] );
@@ -146,9 +140,9 @@ void loop() {
 		send_string(sw_value[i]);
 	}
 	for (int i = 0; i < 2; i++) {
-		pot_value[i] = analogRead(pot_pin[i]);
-		pot_value[i] = map(pot_value[i], 0, 1023, 0, 127); // map for MIDI
-		send_string(pot_value[i]);
+		int v = analogRead(A0); // mandamos ruido
+		v = map(v, 0, 1023, 0, 127); // map for MIDI
+		send_string(v);
 	}
 
 	//SELVA_AMBIENTE
@@ -160,16 +154,10 @@ void loop() {
 		selva_sel_value[i] = digitalRead( selva_sel_pin[i] );
 		send_string(selva_sel_value[i]);
 	}
-	joy_value[0] = analogRead(joy_pin[0]);
+	int v = analogRead(A0);
 //	joy_value[0] = map(joy_value[0], 0, 1023, 0, 127); // map for MIDI
-	send_string(joy_value[0]);
-
-	joy_value[1] = analogRead(joy_pin[1]);
-//	joy_value[1] = map(joy_value[1], 0, 1023, 0, 127); // map for MIDI
-	send_string(joy_value[1]);
-
-//	analogWrite(ball_led_pin, brightness[0]);
-	analogWrite(ball_led_pin, 255);
+	send_string(v);
+	send_string(v);
 
 	/* handling rhythm leds */
 	if (micros() < micros_start) {
@@ -223,27 +211,25 @@ void turn_leds_off() {
 	}
 }
 
-long readDistance(int pin) {
-	pinMode(pin, OUTPUT);
-	digitalWrite(pin, LOW);
+long readDistance(int tri, int echo) {
+	pinMode(tri, OUTPUT);
+	digitalWrite(tri, LOW);
 	delayMicroseconds(2);
-	digitalWrite(pin, HIGH);
+	digitalWrite(tri, HIGH);
 	delayMicroseconds(5);
-	digitalWrite(pin, LOW);
-	pinMode(pin, INPUT);
-	long duration = pulseIn(pin, HIGH);
+	digitalWrite(tri, LOW);
+	pinMode(echo, INPUT);
+	long duration = pulseIn(echo, HIGH, 100000);
 	return duration / 29 / 2;
 }
 
 void test_leds() {
 	int d = 300;
-	analogWrite(ball_led_pin, 255);
 	delay(d);
 	for (int i = 0; i < NUM_LEDS; i++) {
 		analogWrite(led_pin[i], 255);
 		delay(d);
 	}
-	analogWrite(ball_led_pin, 0);
 	turn_leds_off();
 }
 

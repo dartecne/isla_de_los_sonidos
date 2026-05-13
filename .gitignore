@@ -7,3 +7,4 @@ __pycache__/
 .vscode/
 .vs
 .DS_Store
+GUI/__pycache__/MIDI_interface.cpython-36.pyc

@@ -32,13 +32,14 @@ class serial_interface(object):
         self.serial_port = serial.Serial()
 #        self.serial_port.baudrate = 9600
         self.serial_port.baudrate = 115200
-#        print(str(serial.tools.list_ports())) No funciona
+#        print(str(serial.tools.list_ports())) #No funciona
+        print(str(serial.tools.list_ports.comports())) 
         n = len(serial.tools.list_ports.comports())
         print("n serial ports = " + str(n))
 #        self.serial_port.port = 'COM10'
 #        self.serial_port.port = 'COM5'
         try:
-                self.serial_port.port = 'COM4'
+                self.serial_port.port = 'COM7'
                 self.serial_port.open()
                 self.serial_port.flushInput()
         except:
