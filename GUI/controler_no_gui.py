@@ -30,13 +30,11 @@ class Controler(threading.Thread, serial_interface):
         for n in range (self.N_Q):
             self.q.append(queue.Queue())
 
-#        self.loroloco = elements.LoroLoco(2, "loroloco_thread", self.q[0], self.MIDI)
         self.sequencer = elements.Secuenciador(3, "sequencer_thread", self.q[1], self.MIDI)
         self.states_diagram = elements.StatesDiagram(4, "states_diagram_thread", self.q[2], self.MIDI)
 
     def run(self):
 
-#        self.loroloco.start()
         self.sequencer.start()
 
         i = 0
