@@ -10,45 +10,57 @@
 #define GREEN CHSV(96,255,255)
 #define WHITE CHSV(0,0,255)
 
-//IPAddress outIp(192,168,1,3); // Sonoron
-IPAddress outIp(192,168,1,10); // RaspPi
+#define OSC_MSG_ROOT  "/bridge/id"
+
+IPAddress outIp(192,168,1,3); // Sonoron ethernet
+//IPAddress outIp(192,168,1,10); // RaspPi
 const unsigned int outPort = 8000;
 
 //enum SystemState { IDLE, T_1, ACTIVE, T_2 };
-enum SystemState { IDLE, T_1 };
+#define TIME_STATE_T_1  3000 // tiempo en el que estará en el estado T_1 hasta transicionar a T_2
+enum SystemState { IDLE, T_1, T_2 };
 
 struct SystemEvent {
     int delta;
     unsigned int force;
 };
 
-extern unsigned int adaptiveThreshold;
+extern unsigned int deltaThreshold;
+extern unsigned int pressedThreshold; 
 
 class OSCManager {
 public:
   WiFiUDP Udp;
-  String str_msg = "/sensor/force/id";
-  String str_msg_on = "/sensor/on/id";
-  String str_msg_off = "/sensor/off/id";
+  String str_msg_force = OSC_MSG_ROOT;
+  String str_msg_on = OSC_MSG_ROOT;
+  String str_msg_off = OSC_MSG_ROOT;
   void begin( uint8_t id ) {
     Serial.println("Connecting to WiFi...");
     WiFi.begin(WIFI_SSID, WIFI_PASS);
-    // TODO: evitar bucle infinito
-    while (WiFi.status() != WL_CONNECTED) {
-      Serial.print(".");
-      delay(200);
+
+    for( int i = 0; i < 30; i++) {
+      if( WiFi.status() != WL_CONNECTED ) {
+        Serial.print(".");
+        delay(100);
+      } else {
+        Serial.println("Connected!");
+        break;
+      }
     }
+    if( WiFi.status() != WL_CONNECTED ) {
+        Serial.println("ERROR Connecting to WiFi");
+        return;
+    }
+    
     Udp.begin(8888);
-//    str_msg += "id";
-    str_msg += id;
-    str_msg_on += id;
-    str_msg_off += id;
-    Serial.println(str_msg.c_str());
-    Serial.println("Connected!");
+    str_msg_force = str_msg_force + id + "/force";
+    str_msg_on = str_msg_on + id + "/on";
+    str_msg_off = str_msg_off + id + "/off";
+    Serial.println(str_msg_force.c_str());
   }
 
   void sendForce(unsigned int val) {
-    OSCMessage msg(str_msg.c_str());
+    OSCMessage msg(str_msg_force.c_str());
     msg.add(val);
     Udp.beginPacket(outIp, outPort);
       msg.send(Udp);
@@ -84,6 +96,15 @@ public:
   bool active = false;
   bool fadePhase = true;
   unsigned long startTime = 0;
+
+  void sparkle(CRGB* strip1, int NUM1, unsigned int val){
+    uint8_t factor = map(val, 0, pressedThreshold, 1, 10);
+    if( factor <= 0 ) factor = 10;
+    fadeToBlackBy(strip1, NUM1, 40);
+    if (random8() < 256 / factor ) {
+      strip1[random(NUM1)] += CRGB::White;
+    }
+  }
 
   void start() {
     active = true;
@@ -128,7 +149,7 @@ class Bolt {
     void init(uint force, CRGB c) {
       pos = 0;
 //      speed = random( 2, 16 ) / 10.0;
-      speed = map(force, 0, adaptiveThreshold, 16, 2) / 8.0;
+      speed = map(force, 0, deltaThreshold, 16, 2) / 8.0;
       speed = constrain(speed, 0.12, 2);
       Serial.println(String("Inicia un bolt de speed: ") + String(speed));
       active = true;
@@ -176,7 +197,7 @@ class Lightning {
     void trigger(int f, CRGB c) {
       Serial.println("Triggering a bolt...");
       for (int i = 0; i < MAX_LIGHTNINGS; i++) {
-        Serial.println("Bolt id: " + String(i) + ", active:"+ String(bolts[i].active));
+//        Serial.println("Bolt id: " + String(i) + ", active:"+ String(bolts[i].active));
         if (!bolts[i].active) {
           bolts[i].init(f, c);
           break;
