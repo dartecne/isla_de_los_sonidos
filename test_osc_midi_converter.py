@@ -126,8 +126,6 @@ try:
                 # Enviar MIDI CC23 (Volumen) en canal 0
                 send_midi_cc(0, 23, midi_value)
             
-        except Exception as e:
-            print("Error: {}".format(e))
 
 except KeyboardInterrupt:
     print("\n\nCerrando...")

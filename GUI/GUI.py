@@ -417,7 +417,9 @@ class MyFrame ( wx.Frame ):
 		self.m_button_puerto_serie.Bind( wx.EVT_BUTTON, self.OnConnect )
 		self.m_button_puerto_midi.Bind( wx.EVT_BUTTON, self.OnMIDIConnect )
 	
-		self.controler = controler.Controler(1, "control_thread", self)
+		self.controler = controler.Controler(1, "control_thread", 1)
+#		self.controler = controler.Controler(1, "control_thread", self)
+		self.controler.set_GUI(self)
 		self.m_textCtrl_inputs.AppendText( 'Conectando.../n' )
 		self.controler.start()
 
