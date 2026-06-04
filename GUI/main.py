@@ -1,5 +1,6 @@
 
 import sys
+import os
 import GUI
 import wx
 import logging
@@ -9,9 +10,12 @@ from datetime import datetime
 import controler
 
 def setup_logging():
+    log_folder = '../logs'
+    os.makedirs(log_folder, exist_ok=True)
     filename = datetime.now().strftime("lisa_events_%Y%m%d_%H%M%S.log")
+    log_file = os.path.join(log_folder, filename)
     handler = RotatingFileHandler(
-        filename,
+        log_file,
         maxBytes=10_000_000,
         backupCount=5,
         encoding="utf-8"
@@ -38,7 +42,7 @@ if __name__ == '__main__':
         frame.m_textCtrl_inputs.AppendText( 'INIT' );
         app.MainLoop()
     try:
-        controler = controler.Controler(1, "control_thread", gui = 0)
+        controler = controler.Controler(1, "control_thread", 0)
         controler.start()
 
     except KeyboardInterrupt:

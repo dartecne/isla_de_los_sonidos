@@ -49,10 +49,10 @@ class Controler(threading.Thread, serial_interface, osc_interface):
         self.gui = gui
 
     def run(self):
-        self.sequencer.start() # handel all LISA elements: OSC and Serial
-
-        i = 0
         try:
+            self.sequencer.start() # handel all LISA elements: OSC and Serial
+
+            i = 0
             while( True ):
                 # lectura datos puerto serie
                 if self.sp != None:
@@ -75,7 +75,7 @@ class Controler(threading.Thread, serial_interface, osc_interface):
                 # lectura datos OSC
                 self.data_osc = self.parse_osc_data()
                 if self.data_osc == None:
-                    print("WARNING reading OSC data gave None")
+#                    print("WARNING reading OSC data gave None")
                     self.data_osc = [0] * self.N_OSC_DATA
 
                 self.data = self.serial_data + self.data_osc

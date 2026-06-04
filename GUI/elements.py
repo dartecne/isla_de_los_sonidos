@@ -151,6 +151,10 @@ class Secuenciador( Element ):
 #        note = self.normalize( int(self.data[SLIDE_RIBBON[0]]),
 #                                old_min = 0, old_max = 1023, new_min = min_note, new_max = max_note )
         thres = 100   # to filter noise when ribbon is not pushed
+        if (self.data_old[SLIDE_RIBBON[0]] != self.data[SLIDE_RIBBON[0]]):
+            self.MIDI.control_change(RIBBON_CC, int(self.data[SLIDE_RIBBON[0]]))
+            logging.debug("SERES CC: " + str(self.data[SLIDE_RIBBON[0]]))
+
         if((int(self.data[SLIDE_RIBBON[0]]) > thres)):
             if(int(self.data_old[SLIDE_RIBBON[0]]) < thres ):
                 self.MIDI.note_on(RIBBON_NOTE, 127, channel[j])
@@ -167,25 +171,6 @@ class Secuenciador( Element ):
                           str(self.data[SLIDE_RIBBON[1]])+ ", " +
                           str(self.data_old[SLIDE_RIBBON[1]]))
 
-        if((int(self.data[SLIDE_RIBBON[1]]) > thres)):
-            if(int(self.data_old[SLIDE_RIBBON[1]]) < thres ):
-                k = j
-                if(j == 5): k = 0
-                self.MIDI.note_on(RIBBON_NOTE, 127, channel[k])
-                logging.debug("SERES NOTE_ON: " + str(self.data[SLIDE_RIBBON[0]]))
-            if( int(self.data[SLIDE_RIBBON[1]]) !=
-                int(self.data_old[SLIDE_RIBBON[1]]) ):
-                control = self.normalize( int(self.data[SLIDE_RIBBON[0]]),
-                    old_min = 1023, old_max = 940, new_min = 0, new_max = 127 )
-                self.MIDI.control_change( RIBBON_CC, int(control), channel = 1 )
-        if ((int(self.data_old[SLIDE_RIBBON[1]]) > thres ) &
-                (int(self.data[SLIDE_RIBBON[1]]) < thres) ):
-            k = j
-            if (j == 5): j = 0
-            self.MIDI.note_off( RIBBON_NOTE, 127, channel[k])
-            logging.debug("SERES NOTE_OFF: " +
-                          str(self.data[SLIDE_RIBBON[1]])+ ", " +
-                          str(self.data_old[SLIDE_RIBBON[1]]))
 
     def handle_cueva(self):
         for n in range(6):
@@ -228,7 +213,7 @@ class Secuenciador( Element ):
                     (int(self.data[SELVA_SEL[i]]) > 0) ):
                 self.MIDI.note_on( SELVA_SEL_NOTES[i], 127, channel = 1 )
 
-                logging.debug("AMBIENTE " + str(i) + "  NOTE: " + str(self.SELVA_SEL_NOTES[i]) )
+                logging.debug("AMBIENTE " + str(i) + "  NOTE: " + str(SELVA_SEL_NOTES[i]) )
 #                time.sleep(0.9)
         # Pulsadores one_shot tipo arcade
         for i in range(6):

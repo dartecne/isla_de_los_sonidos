@@ -71,6 +71,9 @@ void setup() {
 		pinMode(cueva_sel_pin[i], INPUT);
 	}
 	//
+  for (int i = 0; i < NUM_SELVA_SEL; i++) {
+    pinMode(selva_one_shot_pin[i], INPUT);
+  }
 
 	// SELVA AMBIENTE
 	for (int i = 0; i < NUM_SELVA_SEL; i++) {
@@ -189,14 +192,15 @@ void loop() {
 
 	Serial.println(count);
 	count++;
-	
+
+  /**/
 	int b = 0;
 	while (Serial.available()); // waits data from python app
 	do {
 		b = Serial.read();
 
 	} while (b != '<'); // signal that python app already read serial buffer. No data losed
-	
+	/**/
 }
 
 int get_selection( int sel_value[], int N ) {

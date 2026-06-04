@@ -42,6 +42,8 @@ class MIDI_interface(object):
         logging.debug( "note_off: " + str(channel) + ", "+ str(note) + ", "+ str(vel) )
 
     def control_change(self, control, value, channel = 1 ):
+        if value < 0: value = 0
+        if value >127: value = 127
         msg = mido.Message( 'control_change', channel = channel-1, control=control, value=value );
         self.outport.send(msg)
    #     logging.debug( "CC: " + str(channel) + ", "+ str(control) + ", "+ str(value) )
