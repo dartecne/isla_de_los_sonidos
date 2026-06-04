@@ -8,3 +8,8 @@ __pycache__/
 .vs
 .DS_Store
 GUI/__pycache__/MIDI_interface.cpython-36.pyc
+GUI/__pycache__/GUI.cpython-36.pyc
+GUI/__pycache__/MIDI_interface.cpython-36.pyc
+GUI/__pycache__/serial_interface.cpython-36.pyc
+GUI/__pycache__/controler.cpython-36.pyc
+GUI/__pycache__/GUI.cpython-36.pyc
