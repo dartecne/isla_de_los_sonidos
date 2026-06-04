@@ -27,7 +27,7 @@ long timon_data_value = 0;
 // CUEVA DE LOS RUIDOS
 int cueva_sel_pin[] = { 32, 30, 28 };
 int cueva_sel_value[] = { 0, 0, 0 };
-int sw_pin[] = { 23, 25, 27, 29, 31, 33 }; 
+int sw_pin[] = { 23, 25, 27, 31, 29, 33 }; 
 int sw_value[] = { 0, 0, 0, 0, 0, 0 };
 //int led_pin[] = { 8, 9, 10, 11, 12, 13};
 int led_pin[] = { 13, 12, 11, 10, 9, 8};
@@ -45,7 +45,7 @@ int arp_led_pin = 39;
 int arp_led_value = 0;
 int arp_pin = 41;
 int arp_value = 0;
-int mic_pin = 41; // TODO
+int mic_pin = 35; // TODO
 int mic_value = 0;
 int seres_sel_pin[] = { 53, 51, 49, 47, 45, 43 };
 int seres_sel_value[] = { 0, 0, 0, 0, 0, 0 };

@@ -1,7 +1,7 @@
 #ifndef CLASSES_H
 #define CLASSES_H
 
-#define OSC_MSG_ROOT  "/lorito/id"
+#define OSC_MSG_ROOT  "/lorito"
 #define WIFI_SSID "LISA"
 #define WIFI_PASS "lisa2025"
 
@@ -20,7 +20,7 @@ public:
   String str_bundle = OSC_MSG_ROOT;
   String str_msg_on = OSC_MSG_ROOT;
   String str_msg_off = OSC_MSG_ROOT;
-  void begin( uint8_t id ) {
+  void begin() {
     Serial.println("Connecting to WiFi...");
     WiFi.begin(WIFI_SSID, WIFI_PASS);
 
@@ -39,9 +39,9 @@ public:
     }
     
     Udp.begin(8888);
-    str_bundle = str_bundle + id + "/";
-    str_msg_on = str_msg_on + id + "/on";
-    str_msg_off = str_msg_off + id + "/off";
+    str_bundle = str_bundle + "/";
+    str_msg_on = str_msg_on + "/on";
+    str_msg_off = str_msg_off + "/off";
     Serial.println(str_bundle.c_str());
   }
 /** m - movement
@@ -193,9 +193,6 @@ class SparkleEffect {
       }
     }
 };
-
-
-
 
 
 #endif

@@ -85,7 +85,7 @@ void setup(void) {
   FastLED.setBrightness(BRIGHTNESS);
 
   
-  osc.begin(0);
+  osc.begin(); // no ID
 
   Serial.println("setup OK");
   colorWipe(leds, CHSV(0,255,255), 50);
