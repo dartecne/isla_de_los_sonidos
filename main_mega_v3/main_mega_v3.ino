@@ -54,6 +54,7 @@ void setup() {
 	// SERES ISLA
 	pinMode(arp_led_pin, OUTPUT);
 	pinMode(arp_pin, INPUT);
+	pinMode(mic_pin, INPUT_PULLUP);
 
 	for (int i; i < NUM_SERES_SEL; i++) {
 		pinMode(seres_sel_pin[i], INPUT);
@@ -71,9 +72,9 @@ void setup() {
 		pinMode(cueva_sel_pin[i], INPUT);
 	}
 	//
-  for (int i = 0; i < NUM_SELVA_SEL; i++) {
-    pinMode(selva_one_shot_pin[i], INPUT);
-  }
+	for (int i = 0; i < NUM_SELVA_SEL; i++) {
+		pinMode(selva_one_shot_pin[i], INPUT);
+	}
 
 	// SELVA AMBIENTE
 	for (int i = 0; i < NUM_SELVA_SEL; i++) {
@@ -92,6 +93,8 @@ CUEVA RUIDOS
 SELVA_AMBIENTE
 */
 
+// tunel_distance, timon_value, arp, mic,  
+
 void loop() {
 
 	// TUNEL
@@ -109,7 +112,7 @@ void loop() {
 	PS2MousePos(stat, x, y);
 	timon_data_value = x + '0' - 48;// no se porque hay un offset de 48
 #else
-	timon_data_value = 0;
+	timon_data_value = 0;// 
 #endif
 
 	send_string(timon_data_value );
@@ -130,7 +133,9 @@ void loop() {
 		seres_sel_value[i] = digitalRead( seres_sel_pin[i] );
 		send_string(seres_sel_value[i]);
 	}
+
 	slide_ribbon_value = analogRead( slide_ribbon_pin );
+	int sr_value = map(slide_ribbon_value, 79, 148, 0, 127);
 	send_string( slide_ribbon_value );
   send_string( analogRead(A0)); // mandamos ruido
 	//CUEVA RUIDOS
@@ -142,6 +147,7 @@ void loop() {
 		sw_value[i] = digitalRead( sw_pin[i] );
 		send_string(sw_value[i]);
 	}
+
 	for (int i = 0; i < 2; i++) {
 		int v = analogRead(A0); // mandamos ruido
 		v = map(v, 0, 1023, 0, 127); // map for MIDI
@@ -195,12 +201,14 @@ void loop() {
 
   /**/
 	int b = 0;
+	/**/
 	while (Serial.available()); // waits data from python app
 	do {
 		b = Serial.read();
 
 	} while (b != '<'); // signal that python app already read serial buffer. No data losed
 	/**/
+//	delay(100);
 }
 
 int get_selection( int sel_value[], int N ) {

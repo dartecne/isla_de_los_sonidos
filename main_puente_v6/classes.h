@@ -61,8 +61,9 @@ public:
   }
 
   void sendForce(unsigned int val) {
-    OSCMessage msg(str_msg_force.c_str());
-    msg.add(val);
+    OSCBundle msg; 
+    msg.add(str_msg_force.c_str());
+    msg.add((uint32_t)val);
     Udp.beginPacket(outIp, outPort);
       msg.send(Udp);
     Udp.endPacket();
