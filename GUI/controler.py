@@ -1,4 +1,6 @@
 
+import sys
+import os
 import csv
 from datetime import datetime
 import wx
@@ -79,6 +81,7 @@ class Controler(threading.Thread, serial_interface, osc_interface):
                     self.data_osc = [0] * self.N_OSC_DATA
 
                 self.data = self.serial_data + self.data_osc
+                print(self.data)
                 self.log_data(self.data)
                 for n in range (self.N_Q):
                     self.q[n].put(self.data)
@@ -89,7 +92,9 @@ class Controler(threading.Thread, serial_interface, osc_interface):
             self.close()
 
     def open_log(self):
+        log_folder = "../logs"
         filename = datetime.now().strftime("lisa_data_%Y%m%d_%H%M%S.csv")
+        filename = os.path.join(log_folder, filename)
         self.log_file = open(filename, "w", newline="")
         self.log_writer = csv.writer(self.log_file)
 

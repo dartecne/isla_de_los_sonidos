@@ -1,0 +1,3 @@
+2026-06-08 12:32:17,466 | MainThread | INFO | fichero logging creado
+2026-06-08 12:32:17,468 | MainThread | INFO | Log de datos guardado en: lisa_data_20260608_123217.csv
+2026-06-08 12:32:17,469 | MainThread | INFO | Controller with gui: 0

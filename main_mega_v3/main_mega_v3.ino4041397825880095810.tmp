@@ -80,9 +80,8 @@ void setup() {
 	for (int i = 0; i < NUM_SELVA_SEL; i++) {
 		pinMode(selva_sel_pin[i], INPUT);
 	}
-	slide_ribbon_value_mean = analogRead(slide_ribbon_pin);
 	test_leds();
-} // setup
+}
 
 int led_index = 0;
 
@@ -136,10 +135,9 @@ void loop() {
 	}
 
 	slide_ribbon_value = analogRead( slide_ribbon_pin );
-  slide_ribbon_value_mean = (slide_ribbon_value + slide_ribbon_value_mean) / 2;
-	int sr_value = map(slide_ribbon_value_mean, 560, 960, 0, 127);
+	int sr_value = map(slide_ribbon_value, 79, 148, 0, 127);
   sr_value = constrain( sr_value, 0, 127 );
-	send_string( slide_ribbon_value_mean );
+	send_string( slide_ribbon_value );
   send_string( sr_value); // mandamos valores normalizados
 	//CUEVA RUIDOS
 	for (int i = 0; i < NUM_CUEVA_SEL; i++) {
@@ -202,14 +200,14 @@ void loop() {
 	Serial.println(count);
 	count++;
 
-  /**/
+  /** /
 	int b = 0;
 	while (Serial.available()); // waits data from python app
 	do {
 		b = Serial.read();
 
 	} while (b != '<'); // signal that python app already read serial buffer. No data losed
-	/**/
+	/* */
 //	delay(100);
 }
 

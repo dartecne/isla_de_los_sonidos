@@ -29,9 +29,9 @@ class serial_interface(object):
 #        data = self.serial_port.readline().split().decode()
 #        data = self.serial_port.readline().split()  # Este parece que funciona...
         data = self.serial_port.readline().decode()
-        print(data)
         self.serial_port.write(b'<')
 #        return str(data)
+#        print(data)
         return data
 
 

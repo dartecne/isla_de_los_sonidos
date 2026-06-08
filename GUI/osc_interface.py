@@ -44,7 +44,7 @@ class osc_interface(object):
     def open_osc_port(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind((OSC_IP, OSC_PORT))
-        self.sock.settimeout(0.5)
+        self.sock.settimeout(0.1)
         print("OSC port opened!")
 
     def parse_osc_data(self):
@@ -56,11 +56,10 @@ class osc_interface(object):
         data_dict =  self.parse_osc_bundle(data)
         return self.osc_dict_to_array(data_dict)
 
-
     def read_osc_data(self):
         try:
             data, addr = self.sock.recvfrom(1024)
-#            print(data)
+            #print(data)
             return data, addr
         except socket.timeout:
             return None, None 
