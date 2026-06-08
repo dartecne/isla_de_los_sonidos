@@ -81,7 +81,7 @@ class Controler(threading.Thread, serial_interface, osc_interface):
                     self.data_osc = [0] * self.N_OSC_DATA
 
                 self.data = self.serial_data + self.data_osc
-                print(self.data)
+#                print(self.data)
                 self.log_data(self.data)
                 for n in range (self.N_Q):
                     self.q[n].put(self.data)

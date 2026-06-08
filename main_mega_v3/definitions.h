@@ -32,6 +32,12 @@ int sw_value[] = { 0, 0, 0, 0, 0, 0 };
 //int led_pin[] = { 8, 9, 10, 11, 12, 13};
 int led_pin[] = { 13, 12, 11, 10, 9, 8};
 int led_value[] = { 0, 0, 0, 0, 0 };
+int enc_clk[] = {2, 3}; // pines encoder
+int enc_dt[] = {5, 4};
+int enc_value[] = {0, 0};
+int last_state_clk[] = {0, 0};
+int current_state_clk[] = {0, 0};
+bool enc_dir[] = {0, 0}; // 0 - CCW, 1 - CW
 
 // SELVA SONIDOS AMBIENTE
 

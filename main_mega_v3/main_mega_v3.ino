@@ -17,6 +17,8 @@
  implement timeouts in PS2 readings
 
 */
+#include <Encoder.h>
+
 //#define TIMON_ON
 //#define TUNEL_ON
 //#define PROTO
@@ -34,6 +36,11 @@ unsigned long bpm = 220UL; // Beats per Minute
 
 int count = 0;
 String data = "";
+int led_index = 0;
+
+Encoder enc_1(2,5);
+Encoder enc_2(3,4);
+
 
 /* Configuracion de
 TUNEL
@@ -61,6 +68,12 @@ void setup() {
 	}
 
 	// CUEVA RUIDOS
+/*  for(int i = 0; i < 2; i++){
+    pinMode(enc_clk[i], INPUT);
+    pinMode(enc_dt[i], INPUT);
+    last_state_clk[i] = digitalRead(enc_clk[i]);  
+  }
+  */
 	for (int i = 0; i < NUM_LEDS; i++) {
 		brightness[i] = 0;
 		pinMode(led_pin[i], OUTPUT);
@@ -71,20 +84,17 @@ void setup() {
 	for (int i = 0; i < NUM_CUEVA_SEL; i++) {
 		pinMode(cueva_sel_pin[i], INPUT);
 	}
-	//
+ 
+  // SELVA AMBIENTE
 	for (int i = 0; i < NUM_SELVA_SEL; i++) {
 		pinMode(selva_one_shot_pin[i], INPUT);
 	}
-
-	// SELVA AMBIENTE
 	for (int i = 0; i < NUM_SELVA_SEL; i++) {
 		pinMode(selva_sel_pin[i], INPUT);
 	}
 	slide_ribbon_value_mean = analogRead(slide_ribbon_pin);
 	test_leds();
 } // setup
-
-int led_index = 0;
 
 /*
 TUNEL
@@ -150,12 +160,15 @@ void loop() {
 		sw_value[i] = digitalRead( sw_pin[i] );
 		send_string(sw_value[i]);
 	}
-
-	for (int i = 0; i < 2; i++) {
-		int v = analogRead(A0); // mandamos ruido
-		v = map(v, 0, 1023, 0, 127); // map for MIDI
-		send_string(v);
-	}
+  // ENCODERS
+	int v_enc = abs(enc_1.read()); //read_encoder(i); 
+  v_enc = v_enc % 80; // 80 values por vuelta
+  v_enc = map(v_enc, 0, 80, 0, 128);
+  send_string( v_enc );
+  v_enc = abs(enc_2.read());
+  v_enc = v_enc % 80; // 80 values por vuelta
+  v_enc = map(v_enc, 0, 80, 0, 128);
+	send_string( v_enc );
 
 	//SELVA_AMBIENTE
 	for (int i = 0; i < NUM_SELVA_ONE_SHOT; i++) {
@@ -166,10 +179,9 @@ void loop() {
 		selva_sel_value[i] = digitalRead( selva_sel_pin[i] );
 		send_string(selva_sel_value[i]);
 	}
-	int v = analogRead(A0);
 //	joy_value[0] = map(joy_value[0], 0, 1023, 0, 127); // map for MIDI
-	send_string(v);
-	send_string(v);
+	send_string(analogRead(A0));
+	send_string(analogRead(A1));
 
 	/* handling rhythm leds */
 	if (micros() < micros_start) {
@@ -211,6 +223,25 @@ void loop() {
 	} while (b != '<'); // signal that python app already read serial buffer. No data losed
 	/**/
 //	delay(100);
+}
+
+int read_encoder( int i ) {
+  current_state_clk[i] = digitalRead(enc_clk[i]);
+  if( current_state_clk[i] != last_state_clk[i]) {
+    if( digitalRead(enc_dt[i]) != current_state_clk[i]) {
+      enc_value[i]--;
+      enc_dir[i] = 0;
+      Serial.print("enc_value = ");
+      Serial.println(enc_value[i]);
+    } else {
+      enc_value[i]++;
+      enc_dir[i] = 1;      
+      Serial.print("enc_value = ");
+      Serial.println(enc_value[i]);
+    }
+  }
+  last_state_clk[i] = current_state_clk[i];
+  return enc_value[i];
 }
 
 int get_selection( int sel_value[], int N ) {
