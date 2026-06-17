@@ -7,7 +7,8 @@
 #include <FastLED.h>
 #include <WiFi.h>
 #include <WiFiUdp.h>
-#include <OSCMessage.h>
+//#include <OSCMessage.h>
+#include <OSCBundle.h>
 
 #include "classes.h"
 // ================= CONFIG =================
@@ -15,12 +16,14 @@
 #define LED_PIN1 13
 #define LED_PIN2 12
 #define LED_PIN3 14
+#define LED_PIN4 27
 #define SENSOR_PIN 32
 
 // num LEDs
 #define NUM1 64
 #define NUM2 170
 #define NUM3 170
+#define NUM4 170
 
 #define LED_TYPE WS2812B
 #define COLOR_ORDER GRB
@@ -49,6 +52,7 @@ uint8_t id; // id de la plataforma
 CRGB strip1[NUM1];
 CRGB strip2[NUM2];
 CRGB strip3[NUM3];
+CRGB strip4[NUM4];
 
 //CRGBPalette16 palette;
 //CRGB baseColor[NUM_PLATFORMS] = {CRGB::AntiqueWhite, CRGB::Green3, CRGB::DarkRed,CRGB::AntiqueWhite, CRGB::Green3, CRGB::DarkRed};
@@ -59,60 +63,26 @@ uint8_t hue_color = 30; // HUE_ORANGE   leds[i].setHue( 160);
 uint8_t sat_color = 255; 
 CHSV orange_color( hue_color, sat_color, 255); //  leds[i].setHSV()
 
-QueueHandle_t eventQueue;
-QueueHandle_t sensorValueQueue;
-
 OSCManager osc;
-SystemEvent ev;
 SystemState currentState = IDLE;
+SystemState lastState = IDLE;
 
 FireworkTransition firework;
-Lightning lightning2, lightning3;
+Lightning lightning2, lightning3, lightning4;
 
-int lastSensorValue = 0;
+unsigned int lastSensorValue = 0;
+int delta = 0;
 unsigned int zeroValue = 0; // valor de referencia cuando no hay nadie subido a la plataforma
 unsigned int deltaThreshold = 300; // diferencia entre un valor y el anterior. Midel si hay un pulso (subida o bajada)
-unsigned int pressedThreshold = 0; // umbral 
+float deltaFactor = 3.5; // minDelta = deltaThresh, maxDelta = deltaThres * deltaFactor
+unsigned int randomFactor = 2; // random value for speed
+unsigned int pressedThreshold = 2100; // por debajo se considera que hay peso
+unsigned int noPressedThreshold = 1500; // por encima, se considera que no hay peso 
+    // Sin peso [2100, 2900]
+    // Con peso [1500, 500]
+bool note_on, note_off;
 
 unsigned long init_time = 0;
-
-
-// ================= SENSOR TASK =======================
-
-void sensorTask(void *pvParameters) {
-  osc.begin(id);
-  while (true) {
-    unsigned int val = analogRead(SENSOR_PIN);
-//    Serial.println(val);
-    int delta = val - lastSensorValue;
-    osc.sendForce( val );
-    if( sensorValueQueue != NULL && uxQueueSpacesAvailable(sensorValueQueue) > 0 ) {
-      int ret = xQueueSend(sensorValueQueue, (void*)&val, 0);
-        if (ret == pdTRUE) {
-          // The message was successfully sent.
-        } else if (ret == errQUEUE_FULL) {
-          Serial.println("Error sending sensorValueQueue");
-        }  // Queue send check
-
-    }
-    if( abs(delta) > deltaThreshold ) { // Alguien se ha subido/bajado
-      Serial.print("val = "); Serial.println(val);
-      Serial.print("lastSensorValue = "); Serial.println(lastSensorValue);
-      Serial.print("delta = "); Serial.println(delta);
-      SystemEvent ev;
-      ev.delta = delta;
-      ev.force = val;
-      
-      if( delta > 0 ) osc.sendOn( ev.force ); // se ha subido
-      else osc.sendOff(ev.force);             // se ha bajado
-
-      Serial.println("Pressed: " + String(val));
-      xQueueSend(eventQueue, &ev, portMAX_DELAY);
-    }
-    lastSensorValue = val;
-    vTaskDelay( 40 / portTICK_PERIOD_MS ); // 20ms
-  }
-}
 
 void setup() {
   Serial.begin(115200);
@@ -123,91 +93,172 @@ void setup() {
   FastLED.addLeds<LED_TYPE,LED_PIN1,COLOR_ORDER>(strip1,NUM1);
   FastLED.addLeds<LED_TYPE,LED_PIN2,COLOR_ORDER>(strip2,NUM2);
   FastLED.addLeds<LED_TYPE,LED_PIN3,COLOR_ORDER>(strip3,NUM3);
+  FastLED.addLeds<LED_TYPE,LED_PIN4,COLOR_ORDER>(strip4,NUM3);
   FastLED.setBrightness(BRIGHTNESS);
 
   analogReadResolution(12);
-  eventQueue = xQueueCreate(10, sizeof(SystemEvent));
-  sensorValueQueue = xQueueCreate( 10, sizeof(unsigned int) );
 
   FastLED.setMaxPowerInVoltsAndMilliamps(5,10000);
 
 //  fill_solid(strip1, NUM1, orange_color); // CRGB::DarkRed
   fill_solid(strip1, NUM1, CRGB::DarkRed); // 
   Serial.println("Calibrating...");
-  calibrate();
+//  calibrate();
   Serial.print("zeroValue = " ); Serial.println( zeroValue );
   Serial.print("pressedThreshold = " ); Serial.println( pressedThreshold );
+  osc.begin(id);
+//  test_trigger();
   delay(1000);
-
-  xTaskCreatePinnedToCore(
-    sensorTask,
-    "SensorTask",
-    4000,
-    NULL,
-    1,
-    NULL,
-    1
-  );
 }
 
 void loop() {
-  SystemEvent ev;
-  unsigned int val = 0; // sensor value
-  if (xQueueReceive(eventQueue, &ev, 0) == pdPASS) {
-    Serial.print("lastState: "); Serial.println(currentState);
-    if ((ev.delta < 0) && currentState == IDLE) { // alguien sube
-      currentState = T_1;
-      firework.start();
-      val = ev.force;
-      lightning2.trigger( val + random(val/20), strip_color[random(NUM_COLORS)] );
-      lightning3.trigger( val - random(val/20), strip_color[random(NUM_COLORS)] );
-      Serial.println("currentState: T_1 ");
-    }
-    else if ((ev.delta > 0) && currentState == T_1) { // alguien baja
-      currentState = T_2;
-      val = ev.force;
-      lightning2.trigger( val + random(val/20), strip_color[random(NUM_COLORS)] );
-      lightning3.trigger( val - random(val/20), strip_color[random(NUM_COLORS)] );
-      init_time = millis();
-      Serial.println("currentState: T_2");
-//      Serial.println(init_time);
-    }
-  } else if( currentState == T_2 && ((millis() - init_time) > TIME_STATE_T_1) ) {
-      currentState = IDLE;
-      Serial.println("currentState: IDLE ");
-  //    Serial.println(millis());
-  //    Serial.println(init_time);
+  unsigned int val = analogRead( SENSOR_PIN );
+  Serial.println(val); // [2500, 600] // sin peso, con peso
+  delta = val - lastSensorValue;
+//  Serial.println(delta); // [2500, 600] // sin peso, con peso
+  unsigned int speed = map(abs(delta), deltaThreshold, deltaThreshold*deltaFactor, 0, 10);
+//  osc.sendForce( val, note_on, note_off );
+
+  // Cambios de estado
+  if(val < noPressedThreshold) {
+    currentState = T_1;
+  } else if((val > pressedThreshold) & (currentState == T_1)) {
+    currentState = T_2;
+  } else if( currentState == T_2 && ((millis() - init_time) > TIME_STATE_T_2) ) {
+    currentState = IDLE;
   }
 
-  fadeToBlackBy(strip2, NUM2, 80);
-  fadeToBlackBy(strip3, NUM2, 80);
+  // acciones de transicion de estado
+  if(currentState == T_1 && lastState == IDLE) {
+      firework.start();
+      note_on = 1;
+      note_off = 0;
+      osc.sendForce( val, note_on, note_off );
+      Serial.print("delta = "); Serial.println(delta); 
+      Serial.print("speed = "); Serial.println(speed); 
+
+      lightning2.trigger( speed + (randomFactor - random(randomFactor)), randomBlueColor() );
+      lightning3.trigger( speed + (randomFactor - random(randomFactor)), randomMarineColor() );
+      lightning4.trigger( speed + (randomFactor - random(randomFactor)), randomOceanColor() );
+      Serial.println("currentState: T_1. NOTE_ON");
+  } else if(currentState == T_2 && lastState == T_1) {
+      Serial.print("delta = "); Serial.println(delta); 
+      Serial.print("speed = "); Serial.println(speed); 
+      lightning2.trigger( speed + (randomFactor - random(randomFactor)), randomBlueColor() );
+      lightning3.trigger( speed + (randomFactor - random(randomFactor)), randomMarineColor() );
+      lightning4.trigger( speed + (randomFactor - random(randomFactor)), randomOceanColor() );
+      init_time = millis();
+      Serial.println("currentState: T_2. NOTE_OFF");
+
+  } else if(currentState == IDLE && lastState == T_2) {
+      note_on = 0;
+      note_off = 1;
+      osc.sendForce( val, note_on, note_off );
+      Serial.println("currentState: IDLE ");
+  }
+
+  // acciones de estado
+  int t = random(60,100);
+//  fadeToBlackBy(strip2, NUM2, 80);
+  fadeToBlackBy(strip2, NUM2, t);
+  t = random(60,100);
+  fadeToBlackBy(strip3, NUM3, t);
+  t = random(60,100);
+  fadeToBlackBy(strip4, NUM4, t);
 
   switch (currentState) {
-    case IDLE:
-      {
-        uint8_t fadeVal = sin8(millis()/16);
-//        fill_solid(strip1, NUM1, CHSV(160,255,fadeVal));
-        fill_solid(strip1, NUM1, CHSV(hue_color,sat_color,fadeVal));
-        lightning2.update(strip2, NUM2);
-        lightning3.update(strip3, NUM3);
-      }
-      break;
-
-    case T_1:
-      if (xQueueReceive(sensorValueQueue, &val, 0) == pdPASS) {
-        firework.sparkle(strip1, NUM1, val);
-      }  
+  case IDLE:
+    {
+      uint8_t fadeVal = sin8(millis()/16);
+      fill_solid(strip1, NUM1, CHSV(160,255,fadeVal));
+      fill_solid(strip1, NUM1, CHSV(hue_color,sat_color,fadeVal));
       lightning2.update(strip2, NUM2);
       lightning3.update(strip3, NUM3);
-      break;
-    case T_2:
-      firework.update(strip1, NUM1);
-      lightning2.update(strip2, NUM2);
-      lightning3.update(strip3, NUM3);
-      break;
+      lightning4.update(strip4, NUM4);
+    }
+    break;
+  case T_1:
+    firework.sparkle(strip1, NUM1, val);
+    if(abs(delta) > deltaThreshold) {
+      Serial.print("delta = "); Serial.println(delta); // [2500, 600] // sin peso, con peso
+      Serial.print("speed = "); Serial.println(speed); // [2500, 600] // sin peso, con peso
+      lightning2.trigger( speed + (randomFactor - random(randomFactor)), randomBlueColor() );
+      lightning3.trigger( speed + (randomFactor - random(randomFactor)), randomMarineColor() );
+      lightning4.trigger( speed + (randomFactor - random(randomFactor)), randomOceanColor() );
+    }
+    lightning2.update(strip2, NUM2);
+    lightning3.update(strip3, NUM3);
+    lightning4.update(strip4, NUM4);
+    break;
+  case T_2:
+    firework.update(strip1, NUM1);
+    lightning2.update(strip2, NUM2);
+    lightning3.update(strip3, NUM3);
+    lightning4.update(strip4, NUM4);
+    break;
   }
   FastLED.show();
+  lastState = currentState;
+  lastSensorValue = val;
   delay( 10 );
+}
+
+void test_trigger() {
+  long t = millis();
+  int val = 0;
+  while( val <= 10 ) {
+    fadeToBlackBy(strip2, NUM2, 80);
+    if( millis() - t > 1000) {
+      Serial.println(val);
+      lightning2.trigger( 2, (10 - val), strip_color[random(NUM_COLORS)] );
+      t = millis();
+      val++;
+    }
+    lightning2.update( strip2, NUM2 );
+    FastLED.show();
+  }
+}
+CRGB randomOceanColor() {
+    uint8_t hue;
+
+    switch (random8(3)) {
+        case 0:
+            hue = random8(150, 165);   // Azul claro
+            break;
+        case 1:
+            hue = random8(165, 180);   // Azul medio
+            break;
+        default:
+            hue = random8(180, 191);   // Azul marino
+            break;
+    }
+
+    return CHSV(
+        hue,
+        random8(200, 256),
+        random8(60, 256)
+    );
+}
+
+CRGB randomMarineColor() {
+    uint8_t hue = random8(165, 186);   // Azul intenso a azul marino
+    uint8_t sat = random8(220, 256);   // Muy saturado
+    uint8_t val = random8(40, 180);    // Brillo moderado
+
+    return CHSV(hue, sat, val);
+}
+
+CRGB randomBlueColor() {
+    // En FastLED:
+    // 160 ≈ azul
+    // 170-190 ≈ azul oscuro / marino
+    // 192 ≈ violeta
+
+    uint8_t hue = random8(150, 191);   // Solo tonos azules
+    uint8_t sat = random8(180, 256);   // Alta saturación
+    uint8_t val = random8(80, 256);    // Brillo variable
+
+    return CHSV(hue, sat, val);
 }
 
 unsigned int calibrate() {
