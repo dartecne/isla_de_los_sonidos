@@ -11,7 +11,8 @@
 #define ID_5 5
 #define ID_6 6
 
-#define OSC_MSG_ROOT  "/stone/id"
+//#define OSC_MSG_ROOT  "/stone/id"
+#define OSC_MSG_ROOT  "/stone/id0"
 #define WIFI_SSID "LISA"
 #define WIFI_PASS "lisa2025"
 
@@ -54,7 +55,8 @@ public:
     }
     
     Udp.begin( 8888 );
-    str_bundle = str_bundle + id + "/";
+//    str_bundle = str_bundle + id + "/";
+    str_bundle = str_bundle + "/";
     Serial.println(str_bundle.c_str());
   }
 /** m - movement
@@ -62,13 +64,16 @@ public:
     r - roll
     pressure - presion del sensor de tacto
 */
-  void sendValues(uint32_t m) {
+  void sendValues(uint32_t mov, uint32_t mov_mean, bool on, bool off) {
     OSCBundle bndl;
     bndl.add(str_bundle.c_str());
-    bndl.add("/movement").add((uint32_t)m);
+    bndl.add("/movement").add((uint32_t)mov);
+    bndl.add("/mov_mean").add((uint32_t)mov_mean);
+    bndl.add("/on").add((int32_t)on);
+    bndl.add("/off").add((int32_t)off);
     Udp.beginPacket(outIp, outPort);
       bndl.send(Udp);
-     Udp.endPacket();
+    Udp.endPacket();
     bndl.empty();
   }
 

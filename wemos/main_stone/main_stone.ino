@@ -11,10 +11,19 @@
 #include <FastLED.h>
 
 #include "classes.h"
+#define NUM_VALUES  4
+#define STILL_THRES 7 // menos de esto es reposo
+#define MOV_THRES 10 // más de esto es movimiento
 
 uint8_t id; // id de la plataforma
 unsigned int movement = 0;
-
+unsigned int last_mov = 0;
+int readings[NUM_VALUES];
+int i = 0;
+unsigned int mov_total = 0;
+unsigned int mov_mean = 0;
+unsigned int last_mov_mean = 0;
+bool on, off = 0;
 
 OSCManager osc;
 
@@ -30,8 +39,29 @@ void setup() {
 
 void loop() {
   movement = analogRead(0);
-  Serial.println( movement );
-  osc.sendValues( movement );
+//  Serial.println( movement );
+  mov_total -= readings[i];
+  readings[i] = last_mov - movement;
+  last_mov = movement;
+  readings[i] = abs(readings[i]);
+  mov_total += readings[i];
+  i++;
+  if(i >= NUM_VALUES) i = 0;
+  mov_mean = mov_total / NUM_VALUES;
+  if( last_mov_mean <= STILL_THRES & mov_mean >= MOV_THRES ) {
+    Serial.println( ">>>>BOOOM!!!" );
+    on = 1;
+    off = 0;    
+  } else if( mov_mean <= STILL_THRES & last_mov_mean >= MOV_THRES ){
+    Serial.println( "<<<<<SHHHH" );
+    on = 0;
+    off = 1;    
+  }
+  Serial.println( mov_mean );
+  osc.sendValues( movement, mov_mean, on, off );
+  on = 0;
+  off = 0;
+  last_mov_mean = mov_mean;
   delay(60);
 }
 
