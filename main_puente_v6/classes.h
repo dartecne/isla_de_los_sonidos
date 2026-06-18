@@ -17,7 +17,7 @@ IPAddress outIp(192,168,1,3); // Sonoron ethernet
 const unsigned int outPort = 8000;
 
 //enum SystemState { IDLE, T_1, ACTIVE, T_2 };
-#define TIME_STATE_T_1  3000 // tiempo en el que estará en el estado T_1 hasta transicionar a T_2
+#define TIME_STATE_T_2  3000 // tiempo en el que estará en el estado T_1 hasta transicionar a T_2
 enum SystemState { IDLE, T_1, T_2 };
 
 struct SystemEvent {
@@ -34,6 +34,7 @@ public:
   String str_msg_force = OSC_MSG_ROOT;
   String str_msg_on = OSC_MSG_ROOT;
   String str_msg_off = OSC_MSG_ROOT;
+
   void begin( uint8_t id ) {
     Serial.println("Connecting to WiFi...");
     WiFi.begin(WIFI_SSID, WIFI_PASS);
@@ -54,20 +55,22 @@ public:
     }
     
     Udp.begin(8888);
-    str_msg_force = str_msg_force + id + "/force";
+    str_msg_force = str_msg_force + id + "/";
     str_msg_on = str_msg_on + id + "/on";
     str_msg_off = str_msg_off + id + "/off";
     Serial.println(str_msg_force.c_str());
   }
 
-  void sendForce(unsigned int val) {
-    OSCBundle msg; 
-    msg.add(str_msg_force.c_str());
-    msg.add((uint32_t)val);
+  void sendForce(int32_t val, bool on, bool off) {
+    OSCBundle bndl; 
+    bndl.add(str_msg_force.c_str());
+    bndl.add("/force").add((int32_t)val);
+    bndl.add("/on").add((int32_t)on);
+    bndl.add("/off").add((int32_t)off);
     Udp.beginPacket(outIp, outPort);
-      msg.send(Udp);
+      bndl.send(Udp);
     Udp.endPacket();
-    msg.empty();
+    bndl.empty();
   }
 
   void sendOn(unsigned int val) {
@@ -99,7 +102,7 @@ public:
   bool fadePhase = true;
   unsigned long startTime = 0;
 
-  void sparkle(CRGB* strip1, int NUM1, unsigned int val){
+  void sparkle(CRGB* strip1, int NUM1, unsigned int val) {
     uint8_t factor = map(val, 0, pressedThreshold, 1, 10);
     if( factor <= 0 ) factor = 10;
     fadeToBlackBy(strip1, NUM1, 40);
@@ -147,13 +150,19 @@ class Bolt {
     CRGB color;
     uint8_t brightness;
     Bolt() : pos(0), speed(0.12), length(3), 
-            active(false){} //, color(CRGB::Blue){}                                                                                                                                                                                           
-    void init(uint force, CRGB c) {
+            active(false){} //, color(CRGB::Blue){}       
+
+// force = [0, 10]
+// lenght = [1, 10]
+    void init(uint force, uint l, CRGB c) {
       pos = 0;
 //      speed = random( 2, 16 ) / 10.0;
-      speed = map(force, 0, deltaThreshold, 16, 2) / 8.0;
-      speed = constrain(speed, 0.12, 2);
-      Serial.println(String("Inicia un bolt de speed: ") + String(speed));
+//      speed = map(force, 0, deltaThreshold, 16, 2) / 8.0;
+      length = l;
+      speed = force / 5.0;
+      speed = constrain(speed, 0.1, 2.0);
+//      Serial.println(String("Inicia un bolt de speed: ") + String(speed));
+      Serial.print("Nuevo bolt de speed: "); Serial.println(speed, 2);
       active = true;
       brightness = 80;
       color = c;
@@ -164,7 +173,7 @@ class Bolt {
         pos += speed;
         if (pos >= numLeds) {
           active = false;
-          Serial.println("Bolt llego" );
+//          Serial.println("Bolt llego" );
         }
       }
     }
@@ -197,11 +206,23 @@ class Lightning {
   public:
 
     void trigger(int f, CRGB c) {
-      Serial.println("Triggering a bolt...");
+//      Serial.println("Triggering a bolt...");
+      for (int i = 0; i < MAX_LIGHTNINGS; i++) {
+        int l = 4;
+//        Serial.println("Bolt id: " + String(i) + ", active:"+ String(bolts[i].active));
+        if (!bolts[i].active) {
+          bolts[i].init(f, l, c);
+          break;
+        }
+      }
+    }
+
+    void trigger(int f, int l, CRGB c) {
+//      Serial.println("Triggering a bolt...");
       for (int i = 0; i < MAX_LIGHTNINGS; i++) {
 //        Serial.println("Bolt id: " + String(i) + ", active:"+ String(bolts[i].active));
         if (!bolts[i].active) {
-          bolts[i].init(f, c);
+          bolts[i].init(f, l, c);
           break;
         }
       }
