@@ -83,7 +83,7 @@ void sensorTask(void *pvParameters) {
   osc.begin(id);
   while (true) {
     unsigned int val = analogRead(SENSOR_PIN);
-//    Serial.println(val);
+    Serial.println(val);
     int delta = val - lastSensorValue;
     osc.sendForce( val );
     if( sensorValueQueue != NULL && uxQueueSpacesAvailable(sensorValueQueue) > 0 ) {

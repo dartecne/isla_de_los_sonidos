@@ -16,8 +16,8 @@
 //#define BAUDRATE	9600
 #define BAUDRATE	115200
 
-int tunel_echo = 6;  
-int tunel_trigger= 7;	
+int tunel_echo = 7;  
+int tunel_trigger= 6;	
 long sonar_value = 0;
 
 

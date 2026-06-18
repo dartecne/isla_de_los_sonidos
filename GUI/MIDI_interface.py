@@ -27,24 +27,24 @@ class MIDI_interface(object):
         return( mido.get_output_names() )
 
     def test_note_on(self):
-        msg = mido.Message( 'note_on', channel = 3, note=60, velocity=127 );
+        msg = mido.Message( 'note_on', channel = 3, note=60, velocity=127 )
         self.outport.send(msg)
-        logging.debug( "test_note_on" )
+#        logging.debug( "test_note_on" )
 
     def note_on(self, note, vel, channel = 1):
-        msg = mido.Message( 'note_on', channel = channel - 1, note=note, velocity=vel );
+        msg = mido.Message( 'note_on', channel = channel - 1, note=note, velocity=vel )
         self.outport.send(msg)
-        logging.debug( "note_on: " + str(channel) + ", "+ str(note) + ", "+ str(vel) )
+ #       logging.debug( "note_on: " + str(channel) + ", "+ str(note) + ", "+ str(vel) )
 
     def note_off(self, note, vel, channel = 1):
-        msg = mido.Message( 'note_off', channel = channel - 1, note=note, velocity=vel );
+        msg = mido.Message( 'note_off', channel = channel - 1, note=note, velocity=vel )
         self.outport.send(msg)
-        logging.debug( "note_off: " + str(channel) + ", "+ str(note) + ", "+ str(vel) )
+  #      logging.debug( "note_off: " + str(channel) + ", "+ str(note) + ", "+ str(vel) )
 
     def control_change(self, control, value, channel = 1 ):
         if value < 0: value = 0
         if value >127: value = 127
-        msg = mido.Message( 'control_change', channel = channel-1, control=control, value=value );
+        msg = mido.Message( 'control_change', channel = channel-1, control=control, value=value )
         self.outport.send(msg)
    #     logging.debug( "CC: " + str(channel) + ", "+ str(control) + ", "+ str(value) )
 
