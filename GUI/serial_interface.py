@@ -16,7 +16,7 @@ class serial_interface(object):
         print( sp[n-1] ) 
         print( "n serial ports = " + str(n) )
         try:
-                self.serial_port.port = 'COM6'
+                self.serial_port.port = 'COM7'
                 self.serial_port.open()
                 self.serial_port.flushInput()
                 return self.serial_port

@@ -63,12 +63,31 @@ class Secuenciador( Element ):
     d_old = 0
     d = 0
     arp_state = [0,0,0,0,0,0]
+    seres_last_note = 0
+    ambiente_last_note = 0
 
     def handle_lorito(self):
-        LORITO_ON_THRES = 10
+        #data[LORITO]: movement, pitch, roll, pressure
+        #movement = [0, 100]
+        #
+        LORITO_ON_THRES = 60
         LORITO_OFF_THRES = 20
-        if(self.data[LORITO[0]] > LORITO_ON_THRES ):
-            self.MIDI.note_on(LORITO_NOTE, self.data[LORITO[0]] )
+        if( self.data[LORITO[0]] != self.data_old[LORITO[0]] ):
+            if(int(self.data[LORITO[0]]) > LORITO_ON_THRES ):
+                self.MIDI.note_on(LORITO_NOTE, 127, 1 )
+                logging.debug("LORITO_NOTE: " + str(self.data[LORITO[0]]) )
+
+        if( self.data[LORITO[1]] != self.data_old[LORITO[1]] ):
+#            v = self.normalize(int(self.data[LORITO[1]]), 0 , 128, 0, 127 )
+            v = int(self.data[LORITO[1]]) 
+            self.MIDI.control_change(LORITO_CC[0], v)
+            logging.debug("LORITO_CC: " + str(v) )
+
+        if( self.data[LORITO[2]] != self.data_old[LORITO[2]] ):
+#            v = self.normalize(int(self.data[LORITO[1]]), 0 , 128, 0, 127 )
+            v = int(self.data[LORITO[2]]) 
+            self.MIDI.control_change(LORITO_CC[1], v)
+            logging.debug("LORITO_CC: " + str(v) )
 
     def handle_tunel(self):
         SONAR_THRES = 80   #cm
@@ -80,50 +99,40 @@ class Secuenciador( Element ):
 
         if( (self.d < SONAR_THRES ) &
             (self.d_old > SONAR_THRES)):
-            self.MIDI.note_on( self.TUNEL_NOTE, 127, channel = 1 )
+            self.MIDI.note_on( TUNEL_NOTE, 127, channel = 1 )
 
         self.d_old = self.d
 
     def handle_puente(self):
-        PUENTE_ON_THRES = [160, 160, 160, 160, 160, 160]
-        PUENTE_OFF_THRES = [100, 100, 100, 100, 100, 100]
+        #data[PUENTE] = [2100, 2900] sin peso
+        #data[PUENTE] = [1500, 500] con peso
 
-#        logging.debug("  data = "
-#              + str( self.data[PUENTE[0]] + ", ")
-#              + str( self.data[PUENTE[1]] + ", ")
-#              + str( self.data[PUENTE[2]] + ", ")
-#              + str( self.data[PUENTE[3]] + ", ")
-#              + str( self.data[PUENTE[4]] + ", ")
-#              + str(self.data[PUENTE[5]]))
+        PUENTE_ON_THRES = [2100, 2100, 2100, 2100, 2100, 2100] # menos de esto alguien pisa
+        PUENTE_OFF_THRES = [1500, 1500, 1500, 1500, 1500, 1500] # más de esto alguien se levanta
+        NOISE_FILTER = 50 # cambios permitidos de datos consecutivos en el tiempo
 
         for i in range(6):
-            d = int(self.data[PUENTE[i]]) - int(self.data_old[PUENTE[i]])
-        #                d = abs(d)
+#            d = int(self.data[PUENTE_FORCE[i]]) - int(self.data_old[PUENTE[i]])
+#            d = abs(d)
+#            if d > NOISE_FILTER:
+#            print( "data old = " + str(self.data_old[PUENTE_ON[i]]))
+#            print( "data = " + str(self.data[PUENTE_ON[i]]))
 
-            if((int(self.data[PUENTE[i]]) > PUENTE_ON_THRES[i]) &
-                    (int(self.data_old[PUENTE[i]]) < PUENTE_ON_THRES[i])) :
+            if( self.data[PUENTE_ON[i]] != self.data_old[PUENTE_ON[i]]):
                 self.MIDI.note_on( PUENTE_NOTES[i], 127, channel = 2 )
-#                print(str(i) + "  NOTE_ON " + str(self.PUENTE_NOTES[i]) +
-#                  "   data = " + self.data[PUENTE[i]] +
-#                  "   data_old = " + self.data_old[PUENTE[i]] + "  d = " + str(d))
-#            if( False ):
-#            if (d < -self.PUENTE_OFF_THRES[i]):
-            if ((int(self.data[PUENTE[i]]) < PUENTE_ON_THRES[i]) &
-                    (int(self.data_old[PUENTE[i]]) > PUENTE_ON_THRES[i])):
-                #                    d = self.normalize(d, old_min = 0, old_max = 1023)
+                logging.debug("PUENTE_ON: " + str(i) )
+            elif( self.data[PUENTE_OFF[i]] != self.data_old[PUENTE_OFF[i]]):
                 self.MIDI.note_off( PUENTE_NOTES[i], 127, channel = 2 )
-#                print(str(i) + "  NOTE_OFF " + str(self.PUENTE_NOTES[i]) +
-#                "   data = " + self.data[PUENTE[i]] +
-#                "   data_old = " + self.data_old[osc_interface.PUENTE[i]] + "  d = " + str(d))
+                logging.debug("PUENTE_OFF: " + str(i) )
 
     def handle_timon(self):
         if (int(self.data[BPM]) != int(self.data_old[BPM])):
             x = self.normalize(int(self.data[BPM]),
                                old_min=20, old_max=999, new_min = 10, new_max = 32)
             self.MIDI.control_change(BPM_CC, int(x))
+#        self.MIDI.
 
     def handle_seres(self):
-
     # Selector
         channel = [6, 7, 8, 9, 10, 11]
         j = 0
@@ -140,37 +149,42 @@ class Secuenciador( Element ):
     # Arpeggiator
 #        logging.debug("ARP: " + self.data[ARPEGIATOR])
         if ( int(self.data[ARPEGIATOR]) != int(self.data_old[ARPEGIATOR]) ):
-            if(int(self.data[ARPEGIATOR]) == 1) :
+            if(int(self.data[ARPEGIATOR]) == 0) :
                 logging.debug("ARP")
                 self.MIDI.note_on( ARP_NOTE[j], 127, 1 )
                 self.arp_state[j] = not self.arp_state[j]
+
     # Slide Ribbons
-        min_note = 17
-        max_note = 90
-        note_old = 17
-#        note = self.normalize( int(self.data[SLIDE_RIBBON[0]]),
-#                                old_min = 0, old_max = 1023, new_min = min_note, new_max = max_note )
-        thres = 100   # to filter noise when ribbon is not pushed
-        if (self.data_old[SLIDE_RIBBON[0]] != self.data[SLIDE_RIBBON[0]]):
-            self.MIDI.control_change(RIBBON_CC, int(self.data[SLIDE_RIBBON[0]]))
-            logging.debug("SERES CC: " + str(self.data[SLIDE_RIBBON[0]]))
+        min_note = 60
+        max_note = 116 #96
+        no_note_value = 44 #78 44
+        note = int(self.normalize( int(self.data[SLIDE_RIBBON[1]]),
+                                old_min = 0, old_max = 127, new_min = min_note, new_max = max_note ))
+        if (self.data_old[SLIDE_RIBBON[1]] != self.data[SLIDE_RIBBON[1]]):
+            print( "data old = " + str(self.data_old[SLIDE_RIBBON[1]]))
+            print( "data = " + str(self.data[SLIDE_RIBBON[1]]))
+            if True:
+#            if(int(self.data_old[SLIDE_RIBBON[1]]) == no_note_value)  :
+#                (int(self.data[SLIDE_RIBBON[1]]) != no_note_value) ) :
+                self.MIDI.note_on(int(note), 127, channel[j])
+                logging.debug("SERES NOTE_ON: " + str(note))
+                self.MIDI.note_off(self.seres_last_note, 0, channel[j])
+                logging.debug("SERES NOTE_OFF: " + str(note))
+                self.seres_last_note = note
+                self.MIDI.control_change(RIBBON_CC, int(self.data[SLIDE_RIBBON[1]]), channel = 1)
+                logging.debug("SERES CC: " + str(self.data[SLIDE_RIBBON[1]]))
+            if( int(self.data[SLIDE_RIBBON[1]]) == no_note_value ) :
+                self.MIDI.note_off(self.seres_last_note, 0, channel[j])
+                logging.debug("SERES NOTE_OFF: " + str(note))
+    # MIC
+        if (self.data[MIC_BUTTON] != self.data_old[MIC_BUTTON]):
+            if (int(self.data[MIC_BUTTON]) == 0):
+                self.MIDI.note_on(MIC_REC_NOTE, 127, channel = 1)
+                logging.debug("MIC NOTE_ON: " + str(MIC_REC_NOTE))
 
-        if((int(self.data[SLIDE_RIBBON[0]]) > thres)):
-            if(int(self.data_old[SLIDE_RIBBON[0]]) < thres ):
-                self.MIDI.note_on(RIBBON_NOTE, 127, channel[j])
-                logging.debug("SERES NOTE_ON: " + str(self.data[SLIDE_RIBBON[0]]))
-            if( int(self.data[SLIDE_RIBBON[0]]) !=
-                int(self.data_old[SLIDE_RIBBON[0]]) ):
-                control = self.normalize( int(self.data[SLIDE_RIBBON[0]]),
-                    old_min = 1023, old_max = 940, new_min = 0, new_max = 127 )
-                self.MIDI.control_change( RIBBON_CC, int(control), channel = 1 )
-        if ((int(self.data_old[SLIDE_RIBBON[0]]) > thres ) &
-                (int(self.data[SLIDE_RIBBON[0]]) < thres) ):
-            self.MIDI.note_off( RIBBON_NOTE, 127, channel[j])
-            logging.debug("SERES NOTE_OFF: " +
-                          str(self.data[SLIDE_RIBBON[1]])+ ", " +
-                          str(self.data_old[SLIDE_RIBBON[1]]))
-
+            else:
+                self.MIDI.note_on(MIC_PLAY_NOTE, 127, channel = 1)
+                logging.debug("MIC NOTE_ON: " + str(MIC_PLAY_NOTE))
 
     def handle_cueva(self):
         for n in range(6):
@@ -181,18 +195,24 @@ class Secuenciador( Element ):
                 if(self.data[CUEVA_SEL[0]] == "1"):
                     self.MIDI.note_on(SEQ_1_NOTE[n], 127, 5)
                     self.MIDI.note_off(SEQ_1_NOTE[n], 127, 5)
+                    self.MIDI.note_on(PLAY_NOTE,127,1)
+
                 if(self.data[CUEVA_SEL[1]]== "1"):
                     self.MIDI.note_on(SEQ_2_NOTE[n], 127, 5)
                     self.MIDI.note_off(SEQ_2_NOTE[n], 127, 5)
+                    self.MIDI.note_on(PLAY_NOTE,127,1)
                 if(self.data[CUEVA_SEL[2]]== "1"):
                     self.MIDI.note_on(SEQ_3_NOTE[n], 127, 5)
                     self.MIDI.note_off(SEQ_3_NOTE[n], 127, 5)
+                    self.MIDI.note_on(PLAY_NOTE,127,1)
 
-#                logging.debug( "CUEVA_SEL 0 = " + str(self.data[CUEVA_SEL[0]]) )
-#                logging.debug( "CUEVA_SEL 1 = " + str(self.data[CUEVA_SEL[1]]) )
-#                logging.debug( "CUEVA_SEL 2 = " + str(self.data[CUEVA_SEL[2]]) )
+                logging.debug( "CUEVA_SEL 0 = " + str(self.data[CUEVA_SEL[0]]) )
+                logging.debug( "CUEVA_SEL 1 = " + str(self.data[CUEVA_SEL[1]]) )
+                logging.debug( "CUEVA_SEL 2 = " + str(self.data[CUEVA_SEL[2]]) )
 
+#            if (self.data[CUEVA_SEL[0]] == "1"): 
                 # Encoders (antiguos pots)
+
             THRES = 1
             if( self.data[POT[0]] !=
                 self.data_old[POT[0]]) :
@@ -207,20 +227,28 @@ class Secuenciador( Element ):
 #                      self.data[SELVA_SEL[1]] + ", " +
 #                      self.data[SELVA_SEL[2]] + ", " +
 #                      self.data[SELVA_SEL[3]] )
+        note_offset = 0 
         for i in range( 4 ) :
-            if( (int(self.data[SELVA_SEL[i]]) !=
-                    int(self.data_old[SELVA_SEL[i]])) &
-                    (int(self.data[SELVA_SEL[i]]) > 0) ):
-                self.MIDI.note_on( SELVA_SEL_NOTES[i], 127, channel = 1 )
-
-                logging.debug("AMBIENTE " + str(i) + "  NOTE: " + str(SELVA_SEL_NOTES[i]) )
+#            if( (int(self.data[SELVA_SEL[i]]) !=
+#                    int(self.data_old[SELVA_SEL[i]])) &
+#                    (int(self.data[SELVA_SEL[i]]) > 0) ):
+#                self.MIDI.note_on( SELVA_SEL_NOTES[i], 127, channel = 1 )
+#                logging.debug("AMBIENTE " + str(i) + "  NOTE: " + str(SELVA_SEL_NOTES[i]) )
 #                time.sleep(0.9)
+            if( int(self.data[SELVA_SEL[i]]) == 1 ):
+                note_offset = i*16
+
         # Pulsadores one_shot tipo arcade
         for i in range(6):
             if ((self.data[SELVA_ONE_SHOT[i]] == "1") &
                     (self.data_old[SELVA_ONE_SHOT[i]] == "0")):
-                self.MIDI.note_on(SELVA_ONE_SHOT[i], 127, channel = 4)
-                logging.debug( "ONE_SHOT " + str(i) )
+                self.MIDI.note_on(SELVA_ONE_SHOT_NOTES[i] + note_offset, 127, channel = 4)
+                logging.debug( "ONE_SHOT_NOTE_ON " + str(i) )
+            if ((self.data[SELVA_ONE_SHOT[i]] == "0") &
+                    (self.data_old[SELVA_ONE_SHOT[i]] == "1")):
+                self.MIDI.note_off(SELVA_ONE_SHOT_NOTES[i] + note_offset, 127, channel = 4)
+                logging.debug( "ONE_SHOT_NOTE_OFF " + str(i) )
+                self.ambiente_last_note = SELVA_ONE_SHOT_NOTES[i]
         # joystick
         X_MIN = 390
         X_N = 470

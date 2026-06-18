@@ -23,7 +23,7 @@ class Controler(threading.Thread, serial_interface, osc_interface):
     N_Q = 3 # number of data queues. Each queue goes to each thread.
     HEAD = ["SONAR", "TIMON", "ARPEGIATOR", "MIC_BUTTON", "SERES_ISLA",
     "SLIDE_RIBBON", "CUEVA_SEL", "SW", "POT", "SELVA_ONE_SHOT", "SELVA_SEL",
-    "JOY_X", "JOY_Y", "BPM", "TEMPO", "PUENTE", "LORITO"]
+    "JOY_X", "JOY_Y", "BPM", "TEMPO", "PUENTE_FORCE", "PUENTE_ON","PUENTE_OFF","LORITO"]
 
     def __init__( self, threadID, name, gui_flag):
         self.open_log()
@@ -80,8 +80,8 @@ class Controler(threading.Thread, serial_interface, osc_interface):
 #                    print("WARNING reading OSC data gave None")
                     self.data_osc = [0] * self.N_OSC_DATA
 
+#                print(self.data_osc)
                 self.data = self.serial_data + self.data_osc
-                print(self.data)
                 self.log_data(self.data)
                 for n in range (self.N_Q):
                     self.q[n].put(self.data)

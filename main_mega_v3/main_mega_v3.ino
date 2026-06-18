@@ -2,7 +2,7 @@
  main control of Isla de los Sonidos
  v.3 - actualización para el proyecto con la FECyT
  - Se quita el Loro Loco porque se va a hacer wireless con ESP32
- - Se quitan los piezos del puento porque se van a hacer wireless con ESP32
+ - Se quitan los piezos del puente porque se van a hacer wireless con ESP32
 
  configure leds and sensors
 
@@ -17,9 +17,10 @@
  implement timeouts in PS2 readings
 
 */
+#include <Encoder.h>
+
 //#define TIMON_ON
-//#define TUNEL_ON
-//#define PROTO
+#define TUNEL_ON
 
 #include "Header.h" //with sonoron.sln this path is enough as VisualStudio gets the file
 #include "definitions.h"
@@ -30,10 +31,15 @@ int fadeAmount = 5;    // how many points to fade the LED by
 int piezo_threshold = 120; // minimum value to detect a hit
 
 unsigned long micros_start = 0L;
-unsigned long bpm = 220UL; // Beats per Minute
+unsigned long bpm = 120UL; // Beats per Minute
 
 int count = 0;
 String data = "";
+int led_index = 0;
+
+Encoder enc_1(2,5);
+Encoder enc_2(3,4);
+
 
 /* Configuracion de
 TUNEL
@@ -61,6 +67,12 @@ void setup() {
 	}
 
 	// CUEVA RUIDOS
+/*  for(int i = 0; i < 2; i++){
+    pinMode(enc_clk[i], INPUT);
+    pinMode(enc_dt[i], INPUT);
+    last_state_clk[i] = digitalRead(enc_clk[i]);  
+  }
+  */
 	for (int i = 0; i < NUM_LEDS; i++) {
 		brightness[i] = 0;
 		pinMode(led_pin[i], OUTPUT);
@@ -71,20 +83,17 @@ void setup() {
 	for (int i = 0; i < NUM_CUEVA_SEL; i++) {
 		pinMode(cueva_sel_pin[i], INPUT);
 	}
-	//
+ 
+  // SELVA AMBIENTE
 	for (int i = 0; i < NUM_SELVA_SEL; i++) {
 		pinMode(selva_one_shot_pin[i], INPUT);
 	}
-
-	// SELVA AMBIENTE
 	for (int i = 0; i < NUM_SELVA_SEL; i++) {
 		pinMode(selva_sel_pin[i], INPUT);
 	}
 	slide_ribbon_value_mean = analogRead(slide_ribbon_pin);
 	test_leds();
 } // setup
-
-int led_index = 0;
 
 /*
 TUNEL
@@ -137,7 +146,7 @@ void loop() {
 
 	slide_ribbon_value = analogRead( slide_ribbon_pin );
   slide_ribbon_value_mean = (slide_ribbon_value + slide_ribbon_value_mean) / 2;
-	int sr_value = map(slide_ribbon_value_mean, 560, 960, 0, 127);
+	int sr_value = map(slide_ribbon_value, 560, 960, 0, 127);
   sr_value = constrain( sr_value, 0, 127 );
 	send_string( slide_ribbon_value_mean );
   send_string( sr_value); // mandamos valores normalizados
@@ -150,12 +159,20 @@ void loop() {
 		sw_value[i] = digitalRead( sw_pin[i] );
 		send_string(sw_value[i]);
 	}
-
-	for (int i = 0; i < 2; i++) {
-		int v = analogRead(A0); // mandamos ruido
-		v = map(v, 0, 1023, 0, 127); // map for MIDI
-		send_string(v);
-	}
+  // ENCODERS
+//	int v_enc = abs(enc_1.read()); //read_encoder(i); 
+  int v_enc = enc_1.read(); //read_encoder(i); 
+  if(v_enc >= 160 ) enc_1.write(160);
+  if(v_enc <= 0 ) enc_1.write(0);
+//  v_enc = v_enc % 160; // 80 values por vuelta
+  v_enc = map(v_enc, 0, 160, 0, 128);
+  send_string( v_enc );
+  
+  v_enc = enc_2.read();
+  if(v_enc >= 160 ) enc_2.write(160);
+  if(v_enc <= 0 ) enc_2.write(0);
+  v_enc = map(v_enc, 0, 160, 0, 128);
+	send_string( v_enc );
 
 	//SELVA_AMBIENTE
 	for (int i = 0; i < NUM_SELVA_ONE_SHOT; i++) {
@@ -166,10 +183,9 @@ void loop() {
 		selva_sel_value[i] = digitalRead( selva_sel_pin[i] );
 		send_string(selva_sel_value[i]);
 	}
-	int v = analogRead(A0);
 //	joy_value[0] = map(joy_value[0], 0, 1023, 0, 127); // map for MIDI
-	send_string(v);
-	send_string(v);
+	send_string(analogRead(A0));
+	send_string(analogRead(A1));
 
 	/* handling rhythm leds */
 	if (micros() < micros_start) {
@@ -180,12 +196,13 @@ void loop() {
 //	unsigned long tempo = (unsigned long) tempo_float;
 	bpm += timon_data_value;
 	bpm = constrain( bpm, 0, 500 );
-	unsigned long tempo = 1000000UL * 60UL / bpm;
+  unsigned long tempo = 1000000UL * 60UL / bpm;
+//	unsigned long tempo = 600000UL / bpm;
 
 	send_string( bpm );
 	send_string( tempo );
 
-	if ( micros() - micros_start > tempo ) {
+	if ( (micros() - micros_start) > tempo ) {
 		turn_leds_off();
 		led_index++;
 		if (led_index >= NUM_LEDS) led_index = 0;
@@ -210,7 +227,26 @@ void loop() {
 
 	} while (b != '<'); // signal that python app already read serial buffer. No data losed
 	/**/
-//	delay(100);
+//	delay(60);
+}
+
+int read_encoder( int i ) {
+  current_state_clk[i] = digitalRead(enc_clk[i]);
+  if( current_state_clk[i] != last_state_clk[i]) {
+    if( digitalRead(enc_dt[i]) != current_state_clk[i]) {
+      enc_value[i]--;
+      enc_dir[i] = 0;
+      Serial.print("enc_value = ");
+      Serial.println(enc_value[i]);
+    } else {
+      enc_value[i]++;
+      enc_dir[i] = 1;      
+      Serial.print("enc_value = ");
+      Serial.println(enc_value[i]);
+    }
+  }
+  last_state_clk[i] = current_state_clk[i];
+  return enc_value[i];
 }
 
 int get_selection( int sel_value[], int N ) {

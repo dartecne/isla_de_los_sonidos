@@ -9,6 +9,7 @@ winmm = ctypes.windll.winmm
 # Configuracion OSC
 OSC_IP = "0.0.0.0"
 OSC_PORT = 8000
+OSC_TIMEOUT = 60 #ms
 
 
 """
@@ -22,15 +23,34 @@ class osc_interface(object):
     def __init__(self):
             #dataIDs
         self.OSC_ADD = ["/bridge/id0/force",
+        "/bridge/id0/on",
+        "/bridge/id0/off",
         "/bridge/id1/force",
+        "/bridge/id1/on",
+        "/bridge/id1/off",
         "/bridge/id2/force",
+        "/bridge/id2/on",
+        "/bridge/id2/off",
         "/bridge/id3/force",
+        "/bridge/id3/on",
+        "/bridge/id3/off",
         "/bridge/id4/force",
+        "/bridge/id4/on",
+        "/bridge/id4/off",
         "/bridge/id5/force",
+        "/bridge/id5/on",
+        "/bridge/id5/off",
         "/lorito/movement",
         "/lorito/pitch",
         "/lorito/roll",
-        "/lorito/pressure"]
+        "/lorito/pressure",
+        "/stone/id0/movement",
+        "/stone/id1/movement",
+        "/stone/id2/movement",
+        "/bambu/id0/movement",
+        "/bambu/id1/movement",
+        "/bambu/id2/movement"
+        ]
 
         self.N_OSC_DATA = len(self.OSC_ADD)
         self.data_array = [0] * self.N_OSC_DATA
@@ -44,7 +64,7 @@ class osc_interface(object):
     def open_osc_port(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind((OSC_IP, OSC_PORT))
-        self.sock.settimeout(0.1)
+        self.sock.settimeout(OSC_TIMEOUT / 1000.0)
         print("OSC port opened!")
 
     def parse_osc_data(self):
@@ -52,14 +72,14 @@ class osc_interface(object):
         data_out=[]
         if data is None:
             return None
-
         data_dict =  self.parse_osc_bundle(data)
+        print(data_dict)
         return self.osc_dict_to_array(data_dict)
 
     def read_osc_data(self):
         try:
             data, addr = self.sock.recvfrom(1024)
-            #print(data)
+#            print(data)
             return data, addr
         except socket.timeout:
             return None, None 
@@ -69,7 +89,7 @@ class osc_interface(object):
 
         try:
             if not data.startswith(b'#bundle'):
-                print("No bundle!")
+#                print("No bundle!")
                 return result
 
             offset = 16  # saltar "#bundle" + timetag
@@ -126,8 +146,8 @@ class osc_interface(object):
     def parse_osc_string(self, data, offset):
         """Extrae cadena OSC"""
         end = data.index(b'\x00', offset)
-        string = data[offset:end].decode('ascii')#('ascii')
-        next_offset = end + 1#((end + 4) // 4) * 4
+        string = data[offset:end].decode('ascii')   #('ascii')
+        next_offset = end + 1           #((end + 4) // 4) * 4
         while next_offset % 4 != 0:
             next_offset += 1
         return string, next_offset
@@ -153,7 +173,7 @@ if __name__ == '__main__':
 #        my_interface.open_port()
         while True:
             values = my_interface.parse_osc_data()
-            print(values)
+#            print(values)
 
     except KeyboardInterrupt:
         print("\n\nCerrando...")
